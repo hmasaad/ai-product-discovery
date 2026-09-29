@@ -1,0 +1,27 @@
+<div class="sides">
+  <div>
+    <h3>Evidence for</h3>
+    {% if challenge.supporting %}
+    <ul class="side-list">
+      {% for point in challenge.supporting %}
+      <li class="side-for"><span aria-hidden="true">✓</span> {{ point.text }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="mapping">No supporting evidence.</p>
+    {% endif %}
+  </div>
+  <div>
+    <h3>Evidence against</h3>
+    {% if challenge.contradicting %}
+    <ul class="side-list">
+      {% for point in challenge.contradicting %}
+      <li class="side-against"><span aria-hidden="true">⚠</span> {{ point.text }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="mapping">No contradicting evidence.</p>
+    {% endif %}
+  </div>
+</div>
+<p class="implication side-challenge">{{ challenge.challenge }}</p>

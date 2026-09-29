@@ -22,6 +22,52 @@ def test_board_review_and_queue(tmp_path: Path, monkeypatch):
     assert market.status_code == 200
     assert "Potential implication" in market.text
     assert "Self-serve analysis" in market.text
+
+    users = client.get("/users")
+    assert users.status_code == 200
+    assert "Clustered problems" in users.text
+    assert "Unmet needs" in users.text
+    assert "Event instrumentation" in users.text
+    assert "25%" in users.text
+
+    competitors = client.get("/competitors")
+    assert competitors.status_code == 200
+    assert "Competitor matrix" in competitors.text
+    assert "Potential market gap" in competitors.text
+    assert "Tracking plans are absent from every competitor." in competitors.text
+    assert "Amplitude" in competitors.text
+    assert "absent from every competitor." in loaded.text
+    assert "From signal to opportunity" in loaded.text
+    assert "User segment" in loaded.text
+
+    detected = client.get("/detect")
+    assert detected.status_code == 200
+    assert "Opportunity detection engine" in detected.text
+    assert "Guided tracking plans" in detected.text
+    assert "Product managers at B2B SaaS companies" in detected.text
+    assert "On the review board" in detected.text
+
+    graph = client.get("/graph")
+    assert graph.status_code == 200
+    assert "Why does this opportunity exist?" in graph.text
+    assert "Guided tracking plans exists because" in graph.text
+    assert "Instrumentation took three weeks" in graph.text
+
+    memo = client.get("/opportunities/opp-instrumentation")
+    assert "Trace it on the opportunity graph" in memo.text
+    assert "Product opportunity" in memo.text
+    assert "Observed pain" in memo.text
+    assert "Recommended experiment" in memo.text
+    assert "2 user complaints" in memo.text
+    assert "Pilot guided tracking plans" in memo.text
+    assert "Draft the event spec" in memo.text
+
+    validated = client.get("/validate")
+    assert validated.status_code == 200
+    assert "Evidence for" in validated.text
+    assert "Evidence against" in validated.text
+    assert "What evidence contradicts it?" in validated.text
+    assert "unchallenged" in validated.text
     assert "Bundled session replay" in loaded.text
     assert "Market intel" in loaded.text
     assert "stall rate 62%" in loaded.text

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Opportunity detection · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Opportunity detection engine</p>
+    <h1>From signal to opportunity</h1>
+    <p class="mission">Every signal becomes a candidate. The chain is the case: problem, who feels it, the pain, what already exists, the gap, and the opportunity.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+  </div>
+</section>
+
+{% if candidates %}
+<div class="cards">
+  {% for candidate in candidates %}
+  <article class="card">
+    <div class="card-top">
+      <h2>{{ candidate.chain.opportunity }}</h2>
+      {% if candidate.review_id %}
+      <a href="/opportunities/{{ candidate.review_id }}">On the review board</a>
+      {% else %}
+      <p class="confidence">Waiting for more evidence</p>
+      {% endif %}
+    </div>
+    <p class="theme-label">{{ candidate.label }}</p>
+    {% with chain = candidate.chain %}{% include "chain.html" %}{% endwith %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="empty">
+  <h2>No candidates yet</h2>
+  <p>Load the sample workspace or ingest signals. Each one is converted into this chain.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

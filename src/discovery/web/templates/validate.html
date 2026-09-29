@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Validation · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Opportunity validation agent</p>
+    <h1>Evidence for and against</h1>
+    <p class="mission">Each opportunity is challenged before it reaches a product manager. Supporting evidence and contradicting evidence stay in separate columns.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+  </div>
+</section>
+
+{% if opportunities %}
+<div class="cards">
+  {% for opp in opportunities %}
+  <article class="card">
+    <div class="card-top">
+      <h2><a href="/opportunities/{{ opp.id }}">{{ opp.title }}</a></h2>
+      <span class="pill verdict-{{ opp.verdict.value }}">{{ labels.verdict[opp.verdict.value] }}</span>
+    </div>
+    {% if opp.challenge %}
+    {% with challenge = opp.challenge %}{% include "sides.html" %}{% endwith %}
+    <ol class="challenge-questions">
+      {% for item in opp.challenge.questions %}
+      <li class="q-{{ item.status }}"><strong>{{ item.question }}</strong> {{ item.answer }}</li>
+      {% endfor %}
+    </ol>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="empty">
+  <h2>Nothing to challenge yet</h2>
+  <p>Load the sample workspace. The validation agent runs after an opportunity is detected.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,107 @@
+{
+  "capabilities": [
+    {
+      "id": "ai_assistant",
+      "label": "AI Assistant",
+      "kind": "feature",
+      "direction": "AI assistance",
+      "themes": ["grounded_ai"]
+    },
+    {
+      "id": "natural_language",
+      "label": "Natural language",
+      "kind": "feature",
+      "direction": "natural language questions",
+      "themes": ["natural_language"]
+    },
+    {
+      "id": "self_serve",
+      "label": "Self-serve analysis",
+      "kind": "feature",
+      "direction": "self-serve analysis",
+      "themes": ["self_serve"]
+    },
+    {
+      "id": "session_replay",
+      "label": "Session replay",
+      "kind": "feature",
+      "direction": "session replay",
+      "themes": ["session_replay"]
+    },
+    {
+      "id": "tracking_plans",
+      "label": "Tracking plans",
+      "kind": "feature",
+      "direction": "guided instrumentation",
+      "themes": ["instrumentation"]
+    },
+    {
+      "id": "integrations",
+      "label": "Integrations",
+      "kind": "count",
+      "direction": "a broader ecosystem"
+    },
+    {
+      "id": "pricing",
+      "label": "Pricing",
+      "kind": "price"
+    }
+  ],
+  "products": [
+    {
+      "id": "amplitude",
+      "name": "Amplitude",
+      "moves": [
+        {"capability": "ai_assistant", "observed_at": "2024-01-15", "value": false},
+        {"capability": "ai_assistant", "observed_at": "2026-08-20", "value": true, "note": "Shipped an AI copilot for funnels"},
+        {"capability": "natural_language", "observed_at": "2026-08-20", "value": false},
+        {"capability": "self_serve", "observed_at": "2026-08-20", "value": false},
+        {"capability": "session_replay", "observed_at": "2026-08-20", "value": false},
+        {"capability": "tracking_plans", "observed_at": "2026-08-20", "value": false},
+        {"capability": "integrations", "observed_at": "2026-08-20", "value": 40},
+        {"capability": "pricing", "observed_at": "2026-08-20", "value": 49}
+      ]
+    },
+    {
+      "id": "mixpanel",
+      "name": "Mixpanel",
+      "moves": [
+        {"capability": "ai_assistant", "observed_at": "2026-08-28", "value": false},
+        {"capability": "natural_language", "observed_at": "2024-06-01", "value": false},
+        {"capability": "natural_language", "observed_at": "2026-08-28", "value": true, "note": "Added natural language questions"},
+        {"capability": "self_serve", "observed_at": "2026-08-28", "value": false},
+        {"capability": "session_replay", "observed_at": "2026-08-28", "value": false},
+        {"capability": "tracking_plans", "observed_at": "2026-08-28", "value": false},
+        {"capability": "integrations", "observed_at": "2026-08-28", "value": 28},
+        {"capability": "pricing", "observed_at": "2026-08-28", "value": 36}
+      ]
+    },
+    {
+      "id": "posthog",
+      "name": "PostHog",
+      "moves": [
+        {"capability": "ai_assistant", "observed_at": "2026-08-18", "value": false},
+        {"capability": "natural_language", "observed_at": "2026-08-18", "value": false},
+        {"capability": "self_serve", "observed_at": "2026-08-18", "value": false},
+        {"capability": "session_replay", "observed_at": "2024-03-01", "value": true, "note": "Replay bundled into the suite"},
+        {"capability": "tracking_plans", "observed_at": "2026-08-18", "value": false},
+        {"capability": "integrations", "observed_at": "2026-08-18", "value": 15},
+        {"capability": "pricing", "observed_at": "2026-08-18", "value": 0}
+      ]
+    },
+    {
+      "id": "canvas",
+      "name": "Canvas",
+      "moves": [
+        {"capability": "ai_assistant", "observed_at": "2026-09-11", "value": false},
+        {"capability": "natural_language", "observed_at": "2026-09-11", "value": false},
+        {"capability": "self_serve", "observed_at": "2025-01-10", "value": false},
+        {"capability": "self_serve", "observed_at": "2026-09-11", "value": true, "note": "Launched a self-serve canvas for PMs"},
+        {"capability": "session_replay", "observed_at": "2026-09-11", "value": false},
+        {"capability": "tracking_plans", "observed_at": "2026-09-11", "value": false},
+        {"capability": "integrations", "observed_at": "2026-09-11", "value": 4},
+        {"capability": "pricing", "observed_at": "2026-09-11", "value": 29}
+      ]
+    }
+  ]
+}

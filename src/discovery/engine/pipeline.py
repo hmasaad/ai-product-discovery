@@ -1,6 +1,9 @@
 """Turn clusters into product opportunities."""
 
+from discovery.agents.brief import ProductBriefAgent
+from discovery.agents.validate import OpportunityValidationAgent
 from discovery.engine.cluster import Cluster, build_clusters
+from discovery.engine.detect import chain_for
 from discovery.engine.scoring import (
     classify_gap,
     confidence_score,
@@ -38,20 +41,28 @@ MAPPING_NOTES = {
 }
 
 
-def run_engine(signals: list[Signal], themes: list[Theme]) -> list[Opportunity]:
-    opportunities = [build_opportunity(cluster) for cluster in build_clusters(signals, themes)]
+def run_engine(
+    signals: list[Signal],
+    themes: list[Theme],
+    audience: str = "",
+) -> list[Opportunity]:
+    opportunities = [
+        build_opportunity(cluster, audience) for cluster in build_clusters(signals, themes)
+    ]
     order = {Verdict.pursue: 0, Verdict.investigate: 1, Verdict.park: 2}
     opportunities.sort(key=lambda item: (order[item.verdict], -item.scores.opportunity, item.id))
     return opportunities
 
 
-def build_opportunity(cluster: Cluster) -> Opportunity:
+def build_opportunity(cluster: Cluster, audience: str = "") -> Opportunity:
     gap = classify_gap(cluster.signals)
     checks = build_checks(cluster.signals)
     problem = problem_score(cluster.signals)
     validation = validation_score(checks)
     opportunity = opportunity_score(problem, market_momentum(cluster.signals), gap)
     verdict = choose_verdict(opportunity, gap, checks)
+    chain = chain_for(cluster, audience)
+    challenge = OpportunityValidationAgent().review(cluster.signals, gap, audience)
     return Opportunity(
         id=f"opp-{cluster.theme_id}",
         theme=cluster.theme_id,
@@ -75,6 +86,9 @@ def build_opportunity(cluster: Cluster) -> Opportunity:
         next_steps=next_steps(checks, cluster.experiments),
         evidence=[_evidence(signal) for signal in _by_strength(cluster.signals)],
         signal_ids=[signal.id for signal in _by_strength(cluster.signals)],
+        chain=chain,
+        challenge=challenge,
+        product_brief=ProductBriefAgent().write(cluster, chain, challenge),
     )
 
 

@@ -10,10 +10,12 @@ from fastapi.templating import Jinja2Templates
 from discovery.agent import DiscoveryAgent
 from discovery.models import Opportunity, ReviewStatus
 from discovery.present import (
+    CHANNEL_LABELS,
     FACET_LABELS,
     GAP_LABELS,
     KIND_LABELS,
     PILLAR_LABELS,
+    NODE_LABELS,
     POLARITY_LABELS,
     STATUS_LABELS,
     VERDICT_LABELS,
@@ -26,6 +28,7 @@ from discovery.present import (
 WEB_ROOT = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(WEB_ROOT / "templates"))
 templates.env.filters["pct"] = percent
+templates.env.filters["commas"] = lambda value: f"{int(value):,}"
 templates.env.filters["metric"] = lambda value, key: format_metric(key, value)
 templates.env.filters["pretty_date"] = format_date
 templates.env.filters["pretty_time"] = format_timestamp
@@ -38,6 +41,8 @@ LABELS = {
     "kind": KIND_LABELS,
     "polarity": POLARITY_LABELS,
     "facet": FACET_LABELS,
+    "channel": CHANNEL_LABELS,
+    "node": NODE_LABELS,
 }
 
 
@@ -76,10 +81,114 @@ def create_app() -> FastAPI:
     @app.post("/cycle")
     def cycle(request: Request) -> RedirectResponse:
         DiscoveryAgent().run_cycle()
-        target = request.headers.get("referer", "")
-        if target.endswith("/market"):
-            return RedirectResponse("/market", status_code=303)
+        from urllib.parse import urlparse
+
+        path = urlparse(request.headers.get("referer", "")).path
+        if path in {"/market", "/users", "/competitors", "/detect", "/validate", "/graph"}:
+            return RedirectResponse(path, status_code=303)
         return RedirectResponse("/", status_code=303)
+
+    @app.get("/users", response_class=HTMLResponse)
+    def users(request: Request) -> HTMLResponse:
+        agent = DiscoveryAgent()
+        return _render(
+            request,
+            "users.html",
+            {
+                "context": agent.context(),
+                "report": agent.user_intelligence(),
+                "signal_count": len(agent.signals()),
+                "labels": LABELS,
+                "users": True,
+                "market": False,
+                "queue": False,
+            },
+        )
+
+    @app.get("/competitors", response_class=HTMLResponse)
+    def competitors(request: Request) -> HTMLResponse:
+        agent = DiscoveryAgent()
+        return _render(
+            request,
+            "competitors.html",
+            {
+                "context": agent.context(),
+                "report": agent.competitor_intelligence(),
+                "signal_count": len(agent.signals()),
+                "labels": LABELS,
+                "competitors": True,
+                "market": False,
+                "users": False,
+                "queue": False,
+            },
+        )
+
+    @app.get("/detect", response_class=HTMLResponse)
+    def detect(request: Request) -> HTMLResponse:
+        agent = DiscoveryAgent()
+        return _render(
+            request,
+            "detect.html",
+            {
+                "context": agent.context(),
+                "candidates": agent.candidates(),
+                "signal_count": len(agent.signals()),
+                "labels": LABELS,
+                "detect": True,
+                "market": False,
+                "users": False,
+                "competitors": False,
+                "queue": False,
+            },
+        )
+
+    @app.get("/validate", response_class=HTMLResponse)
+    def validate(request: Request) -> HTMLResponse:
+        agent = DiscoveryAgent()
+        return _render(
+            request,
+            "validate.html",
+            {
+                "context": agent.context(),
+                "opportunities": agent.opportunities(),
+                "signal_count": len(agent.signals()),
+                "labels": LABELS,
+                "validate": True,
+                "market": False,
+                "users": False,
+                "competitors": False,
+                "detect": False,
+                "queue": False,
+            },
+        )
+
+    @app.get("/graph", response_class=HTMLResponse)
+    def graph_page(request: Request, opportunity: str | None = None) -> HTMLResponse:
+        from discovery.engine.graph import trace
+
+        agent = DiscoveryAgent()
+        opportunities = agent.opportunities()
+        selected = opportunity or _default_opportunity(opportunities)
+        stored = agent.opportunity_graph()
+        traced = trace(stored, selected) if stored is not None and selected else None
+        return _render(
+            request,
+            "graph.html",
+            {
+                "context": agent.context(),
+                "opportunities": opportunities,
+                "selected": selected,
+                "trace": traced,
+                "signal_count": len(agent.signals()),
+                "labels": LABELS,
+                "graph": True,
+                "market": False,
+                "users": False,
+                "competitors": False,
+                "detect": False,
+                "queue": False,
+            },
+        )
 
     @app.get("/queue", response_class=HTMLResponse)
     def queue(request: Request) -> HTMLResponse:
@@ -99,6 +208,7 @@ def create_app() -> FastAPI:
                 "opportunity": opportunity,
                 "reviews": agent.reviews(opportunity_id),
                 "labels": LABELS,
+                "trace": _trace_for(agent, opportunity_id),
                 "next_url": f"/opportunities/{opportunity_id}",
             },
         )
@@ -169,6 +279,22 @@ def _board(
             "pursue_count": verdict_counts["pursue"],
         },
     )
+
+
+def _default_opportunity(opportunities: list[Opportunity]) -> str:
+    pursue = next((item for item in opportunities if item.verdict.value == "pursue"), None)
+    if pursue is not None:
+        return pursue.id
+    return opportunities[0].id if opportunities else ""
+
+
+def _trace_for(agent: DiscoveryAgent, opportunity_id: str):
+    from discovery.engine.graph import trace
+
+    stored = agent.opportunity_graph()
+    if stored is None:
+        return None
+    return trace(stored, opportunity_id)
 
 
 def _filter_opportunities(

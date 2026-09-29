@@ -49,10 +49,13 @@
     </ul>
   </article>
   <ol class="engine-rail">
-    <li>Problem identification</li>
-    <li>Opportunity mapping</li>
-    <li>Idea generation</li>
-    <li>Validation agent</li>
+    <li>Signal</li>
+    <li>Problem</li>
+    <li>User segment</li>
+    <li>Pain</li>
+    <li>Existing solutions</li>
+    <li>Gap</li>
+    <li>Opportunity</li>
     <li class="engine-out">{{ pursue_count }} pursue</li>
   </ol>
 </section>
@@ -115,6 +118,9 @@
       <h2><a href="/opportunities/{{ opp.id }}">{{ opp.title }}</a></h2>
       <p class="theme-label">{{ opp.label }}</p>
       <p class="rationale">{{ opp.rationale }}</p>
+      {% if opp.challenge %}
+      {% with challenge = opp.challenge %}{% include "sides.html" %}{% endwith %}
+      {% endif %}
 
       <div class="scores" aria-label="Scores">
         <div class="score">
@@ -134,10 +140,17 @@
         </div>
       </div>
 
+      {% if opp.chain %}
+      <section class="block">
+        <h3>From signal to opportunity</h3>
+        {% with chain = opp.chain %}{% include "chain.html" %}{% endwith %}
+      </section>
+      {% else %}
       <section class="block">
         <h3>Problem</h3>
         <p>{{ opp.problem }}</p>
       </section>
+      {% endif %}
       <section class="block">
         <h3>Why now</h3>
         <p>{{ opp.why_now }}</p>
@@ -151,6 +164,22 @@
           {% for line in opp.market.evidence %}<li>{{ line }}</li>{% endfor %}
         </ul>
         <p class="implication">Potential implication: {{ opp.market.implication }}</p>
+      </section>
+      {% endif %}
+      {% if opp.user %}
+      <section class="block user-signal">
+        <h3>User intelligence</h3>
+        <p>{{ opp.user.share | pct }}% of {{ opp.user.feedback_count | commas }} feedback items are about {{ opp.user.label }}.</p>
+        {% if opp.user.unmet %}
+        <p class="implication">Unmet need: {{ opp.user.unmet_need }}</p>
+        {% endif %}
+      </section>
+      {% endif %}
+      {% if opp.competitor %}
+      <section class="block competitor-signal">
+        <h3>Competitor intelligence</h3>
+        <p>{{ opp.competitor.race }}</p>
+        <p class="implication">Potential market gap: {{ opp.competitor.gap }}</p>
       </section>
       {% endif %}
       <section class="block">

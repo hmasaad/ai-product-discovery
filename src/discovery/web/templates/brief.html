@@ -13,14 +13,40 @@
     <p class="memo-meta">{{ context.category }} · {{ context.audience }} · opportunity {{ opportunity.scores.opportunity | pct }} · confidence {{ opportunity.scores.confidence | pct }}</p>
   </header>
 
+  {% if opportunity.product_brief %}
+  {% with brief = opportunity.product_brief %}{% include "product_brief.html" %}{% endwith %}
+  {% endif %}
+
   <section>
     <h2>Validation</h2>
     <p class="rationale">{{ opportunity.rationale }}</p>
+    {% if opportunity.challenge %}
+    {% with challenge = opportunity.challenge %}{% include "sides.html" %}{% endwith %}
+    <ol class="challenge-questions">
+      {% for item in opportunity.challenge.questions %}
+      <li class="q-{{ item.status }}"><strong>{{ item.question }}</strong> {{ item.answer }}</li>
+      {% endfor %}
+    </ol>
+    {% endif %}
   </section>
+  {% if opportunity.chain %}
+  <section>
+    <h2>From signal to opportunity</h2>
+    {% with chain = opportunity.chain %}{% include "chain.html" %}{% endwith %}
+  </section>
+  {% else %}
   <section>
     <h2>Problem</h2>
     <p>{{ opportunity.problem }}</p>
   </section>
+  {% endif %}
+  {% if trace %}
+  <section>
+    <h2>Why does this opportunity exist?</h2>
+    <p>{{ trace.why }}</p>
+    <p class="mapping"><a href="/graph?opportunity={{ opportunity.id }}">Trace it on the opportunity graph</a></p>
+  </section>
+  {% endif %}
   <section>
     <h2>Why now</h2>
     <p>{{ opportunity.why_now }}</p>
@@ -34,6 +60,22 @@
       {% for line in opportunity.market.evidence %}<li>{{ line }}</li>{% endfor %}
     </ul>
     <p class="implication">Potential implication: {{ opportunity.market.implication }}</p>
+  </section>
+  {% endif %}
+  {% if opportunity.user %}
+  <section class="user-signal">
+    <h2>User intelligence</h2>
+    <p>{{ opportunity.user.share | pct }}% of {{ opportunity.user.feedback_count | commas }} feedback items are about {{ opportunity.user.label }}.</p>
+    {% if opportunity.user.unmet %}
+    <p class="implication">Unmet need: {{ opportunity.user.unmet_need }}</p>
+    {% endif %}
+  </section>
+  {% endif %}
+  {% if opportunity.competitor %}
+  <section class="competitor-signal">
+    <h2>Competitor intelligence</h2>
+    <p>{{ opportunity.competitor.race }}</p>
+    <p class="implication">Potential market gap: {{ opportunity.competitor.gap }}</p>
   </section>
   {% endif %}
   <section>

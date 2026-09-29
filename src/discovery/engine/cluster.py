@@ -86,8 +86,30 @@ class Cluster:
     idea_summary: str
     risks: list[str] = field(default_factory=list)
     experiments: list[str] = field(default_factory=list)
+    solutions: list[str] = field(default_factory=list)
+    mvp: list[str] = field(default_factory=list)
+    open_questions: list[str] = field(default_factory=list)
+    experiment: str = ""
     signals: list[Signal] = field(default_factory=list)
     emergent: bool = False
+
+
+def themed_cluster(theme: Theme, signals: list[Signal], *, emergent: bool = False) -> Cluster:
+    return Cluster(
+        theme_id=theme.id,
+        label=theme.label,
+        problem=theme.problem,
+        idea_title=theme.idea_title,
+        idea_summary=theme.idea_summary,
+        risks=list(theme.risks),
+        experiments=list(theme.experiments),
+        solutions=list(theme.solutions),
+        mvp=list(theme.mvp),
+        open_questions=list(theme.open_questions),
+        experiment=theme.experiment,
+        signals=signals,
+        emergent=emergent,
+    )
 
 
 def build_clusters(signals: list[Signal], themes: list[Theme]) -> list[Cluster]:
@@ -107,18 +129,7 @@ def build_clusters(signals: list[Signal], themes: list[Theme]) -> list[Cluster]:
         if len(grouped) < MIN_CLUSTER:
             continue
         theme = themes_by_id[theme_id]
-        clusters.append(
-            Cluster(
-                theme_id=theme.id,
-                label=theme.label,
-                problem=theme.problem,
-                idea_title=theme.idea_title,
-                idea_summary=theme.idea_summary,
-                risks=list(theme.risks),
-                experiments=list(theme.experiments),
-                signals=_stable(grouped),
-            )
-        )
+        clusters.append(themed_cluster(theme, _stable(grouped)))
 
     clusters.extend(_emergent_clusters(unmatched))
     clusters.sort(key=lambda cluster: cluster.theme_id)

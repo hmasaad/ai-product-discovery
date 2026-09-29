@@ -9,6 +9,15 @@
     "risks": [
       "Loose governance could flood the warehouse with events nobody trusts."
     ],
+    "mvp": [
+      "Draft the event spec",
+      "Show what is still missing",
+      "Check implementation without a full engineering cycle"
+    ],
+    "open_questions": [
+      "Will a guided plan stay trusted after the first week?",
+      "Which stalled workspaces should join the pilot?"
+    ],
     "experiments": [
       "Pilot guided tracking plans with five workspaces stalled at instrumentation. Success is a trusted funnel in days, not weeks.",
       "Compare activation for workspaces that adopt a tracking plan against the current stall rate."
@@ -23,6 +32,14 @@
     "idea_summary": "Build exploration around the questions product managers already ask, so funnel and segment answers do not require SQL or a ticket to the data team.",
     "risks": [
       "A simplified explorer can still produce misleading cuts if definitions stay ambiguous."
+    ],
+    "mvp": [
+      "Funnel and segment answers without SQL",
+      "A question flow that does not require a data-team ticket"
+    ],
+    "open_questions": [
+      "Do simplified cuts stay faithful to event definitions?",
+      "Will PMs stop exporting routine questions?"
     ],
     "experiments": [
       "Put a PM-only question flow in front of five teams who currently export to spreadsheets.",
@@ -39,6 +56,14 @@
     "risks": [
       "Cited-but-wrong answers will burn trust faster than generic ones."
     ],
+    "mvp": [
+      "Generate the few changes that cite this workspace's events",
+      "Show the evidence under the sentence"
+    ],
+    "open_questions": [
+      "Will a cited wrong answer burn trust?",
+      "Which events are safe to cite?"
+    ],
     "experiments": [
       "Replace generic insight cards with answers that cite the workspace's own events, then remeasure the dismiss rate."
     ]
@@ -52,6 +77,14 @@
     "idea_summary": "Let people ask in plain language, but resolve every question against the tracking plan and refuse an answer the events cannot support.",
     "risks": [
       "A fluent wrong answer looks more authoritative than a chart people already distrust."
+    ],
+    "mvp": [
+      "Resolve plain-language questions against the tracking plan",
+      "Refuse an answer the events cannot support"
+    ],
+    "open_questions": [
+      "Where is a fluent answer wrong?",
+      "When should the product refuse?"
     ],
     "experiments": [
       "Test natural language questions on three tracking plans and record where the answer is wrong or refused."
@@ -67,6 +100,12 @@
     "risks": [
       "Replaying sessions can become a time sink that does not change the roadmap."
     ],
+    "mvp": [
+      "Move from a drop-off to the sessions behind it"
+    ],
+    "open_questions": [
+      "Which activation questions can current analytics not answer?"
+    ],
     "experiments": [
       "Before building replay, list activation questions that current analytics cannot answer."
     ]
@@ -80,6 +119,12 @@
     "idea_summary": "Offer a dark theme for people working late.",
     "risks": [
       "Visual preferences rarely move activation or retention on their own."
+    ],
+    "mvp": [
+      "A dark theme for late sessions"
+    ],
+    "open_questions": [
+      "Does the request show up in retention, lost deals, or repeated feedback with impact?"
     ],
     "experiments": [
       "Do not schedule this until the same request shows up in retention, lost deals, or repeated feedback with impact."

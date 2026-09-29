@@ -1,0 +1,35 @@
+<section class="opportunity-brief">
+  <p class="brief-kicker">Product opportunity</p>
+  <h2>Problem</h2>
+  <p>{{ brief.problem }}</p>
+  <h2>Target users</h2>
+  <p>{{ brief.target_users }}</p>
+  <h2>Observed pain</h2>
+  <p>{{ brief.observed_pain }}</p>
+  <h2>Existing solutions</h2>
+  <ul class="plain">
+    {% for item in brief.existing_solutions %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+  <h2>Gap</h2>
+  <p>{{ brief.gap }}</p>
+  <h2>Opportunity</h2>
+  <p>{{ brief.opportunity }}</p>
+  <h2>Potential MVP</h2>
+  <ul class="plain">
+    {% for item in brief.mvp %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+  <h2>Evidence</h2>
+  <ul class="evidence-counts">
+    {% for line in brief.evidence %}<li>{{ line }}</li>{% endfor %}
+  </ul>
+  <h2>Risks</h2>
+  <ul class="plain">
+    {% for risk in brief.risks %}<li>{{ risk }}</li>{% endfor %}
+  </ul>
+  <h2>Open questions</h2>
+  <ul class="plain">
+    {% for question in brief.open_questions %}<li>{{ question }}</li>{% endfor %}
+  </ul>
+  <h2>Recommended experiment</h2>
+  <p class="experiment">{{ brief.experiment }}</p>
+</section>

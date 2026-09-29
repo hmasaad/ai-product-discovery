@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}User intelligence · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">User intelligence agent</p>
+    <h1>Clustered problems</h1>
+    <p class="mission">Complaints from reviews, tickets, interviews, community posts, and product analytics, grouped into the needs people still have.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+  </div>
+</section>
+
+{% if report and report.feedback_count %}
+<section class="card user-signal">
+  <p class="feedback-count">{{ report.feedback_count | commas }}</p>
+  <p class="feedback-caption">user feedback items</p>
+  <h2>Clustered problems</h2>
+  {% for cluster in report.clusters %}
+  <div class="share-row">
+    <span>{{ cluster.label }}</span>
+    <div class="bar" title="{{ cluster.volume }} items"><span style="width: {{ cluster.share | pct }}%"></span></div>
+    <strong>{{ cluster.share | pct }}%</strong>
+  </div>
+  {% endfor %}
+  {% if report.other_volume %}
+  <div class="share-row">
+    <span>Other</span>
+    <div class="bar"><span style="width: {{ (report.other_volume / report.feedback_count) | pct }}%"></span></div>
+    <strong>{{ (report.other_volume / report.feedback_count) | pct }}%</strong>
+  </div>
+  {% endif %}
+</section>
+
+<section class="section-head">
+  <h2>Unmet needs</h2>
+</section>
+{% if report.unmet_needs %}
+<div class="cards">
+  {% for cluster in report.unmet_needs %}
+  <article class="card">
+    <div class="card-top">
+      <h2>{{ cluster.label }}</h2>
+      <p class="confidence">{{ cluster.share | pct }}%</p>
+    </div>
+    <p class="rationale">{{ cluster.unmet_need }}</p>
+    <div class="pills">
+      {% for channel in cluster.channels %}
+      <span class="pill gap">{{ labels.channel[channel.value] }}</span>
+      {% endfor %}
+    </div>
+    <ul class="plain">
+      {% for example in cluster.examples %}<li>{{ example }}</li>{% endfor %}
+    </ul>
+    {% if cluster.corroborated_by %}
+    <p class="mapping">Product analytics: {{ cluster.corroborated_by | join("; ") }}</p>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="empty">
+  <h2>No unmet need cleared the bar</h2>
+  <p>Complaints are clustered above. None are strong enough to treat as an unmet need yet.</p>
+</section>
+{% endif %}
+{% else %}
+<section class="empty">
+  <h2>No user feedback yet</h2>
+  <p>Load the sample workspace or ingest reviews, tickets, interviews, and community posts.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

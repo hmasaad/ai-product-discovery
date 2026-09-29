@@ -1,0 +1,9 @@
+<article class="graph-node{% if not node %} graph-node-empty{% endif %}">
+  {% if node %}
+  <span>{{ labels.node[node.kind.value] }}</span>
+  <strong>{{ node.title }}</strong>
+  {% if node.detail and node.detail != node.title %}<p>{{ node.detail }}</p>{% endif %}
+  {% else %}
+  <span>Not in the evidence</span>
+  {% endif %}
+</article>

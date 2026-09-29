@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Opportunity graph · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Opportunity graph</p>
+    <h1>Why does this opportunity exist?</h1>
+    <p class="mission">The bet sits on a path from the market through the trend, the users, the competitors, the problem, and the gap. Each step cites the evidence it came from.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+  </div>
+</section>
+
+{% if trace %}
+<nav class="filters" aria-label="Opportunities">
+  {% for opp in opportunities %}
+  <a href="/graph?opportunity={{ opp.id }}" {% if opp.id == selected %}aria-current="page"{% endif %}>{{ opp.title }}</a>
+  {% endfor %}
+</nav>
+
+<section class="card">
+  <h2>{{ trace.title }}</h2>
+  <p class="rationale">{{ trace.why }}</p>
+</section>
+
+<div class="graph-layout" aria-label="Evidence path">
+  {% with node = trace.market %}{% include "graph_node.html" %}{% endwith %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.trend %}{% include "graph_node.html" %}{% endwith %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  <div class="graph-split">
+    {% with node = trace.users %}{% include "graph_node.html" %}{% endwith %}
+    {% with node = trace.competitors %}{% include "graph_node.html" %}{% endwith %}
+  </div>
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  <div class="graph-split">
+    {% with node = trace.problem %}{% include "graph_node.html" %}{% endwith %}
+    {% with node = trace.gap %}{% include "graph_node.html" %}{% endwith %}
+  </div>
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.opportunity %}{% include "graph_node.html" %}{% endwith %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  <div class="graph-split">
+    {% with node = trace.feature %}{% include "graph_node.html" %}{% endwith %}
+    {% with node = trace.product %}{% include "graph_node.html" %}{% endwith %}
+  </div>
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  <div class="graph-split">
+    {% with node = trace.mvp %}{% include "graph_node.html" %}{% endwith %}
+    {% with node = trace.business_case %}{% include "graph_node.html" %}{% endwith %}
+  </div>
+</div>
+
+<section class="section-head">
+  <h2>Sources</h2>
+</section>
+{% if trace.sources %}
+<ul class="source-list">
+  {% for source in trace.sources %}
+  <li>
+    <strong>{{ source.title }}</strong>
+    <span>{{ source.source }}{% if source.observed_at %} · {{ source.observed_at | pretty_date }}{% endif %}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="mapping">No source signal is attached to this path yet.</p>
+{% endif %}
+{% else %}
+<section class="empty">
+  <h2>No graph yet</h2>
+  <p>Load the sample workspace. The next cycle links each opportunity back to the signals that justify it.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

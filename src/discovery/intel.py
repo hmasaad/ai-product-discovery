@@ -11,7 +11,7 @@ from typing import Protocol
 
 from pydantic import TypeAdapter, ValidationError
 
-from discovery.models import IntelPillar, ProductContext, Signal, Theme
+from discovery.models import CompetitorCatalog, IntelPillar, ProductContext, Signal, Theme
 
 _SIGNAL_LIST = TypeAdapter(list[Signal])
 _THEME_LIST = TypeAdapter(list[Theme])
@@ -85,14 +85,15 @@ def load_themes(path: Path) -> list[Theme]:
 def load_signals(path: Path) -> list[Signal]:
     """Load signals from a JSON file or from every ``*.json`` file in a directory.
 
-    ``context.json`` and ``themes.json`` are skipped so a workspace folder can
-    be ingested as a directory without mixing configuration into evidence.
+    ``context.json``, ``themes.json``, and ``competitors.json`` are skipped so a
+    workspace folder can be ingested as a directory without mixing configuration
+    into evidence.
     """
 
     if path.is_dir():
         signals: list[Signal] = []
         for file in sorted(path.glob("*.json")):
-            if file.name in {"context.json", "themes.json"}:
+            if file.name in {"context.json", "themes.json", "competitors.json"}:
                 continue
             signals.extend(load_signals(file))
         _reject_duplicate_ids(signals)
@@ -107,6 +108,46 @@ def load_signals(path: Path) -> list[Signal]:
         raise ValueError(f"{path} is not a signal list:\n{exc}") from exc
     _reject_duplicate_ids(signals)
     return signals
+
+
+def load_competitors(path: Path) -> CompetitorCatalog:
+    if not path.exists():
+        return CompetitorCatalog()
+    payload = load_json(path)
+    try:
+        catalog = CompetitorCatalog.model_validate(payload)
+    except ValidationError as exc:
+        raise ValueError(f"{path} is not a competitor catalog:\n{exc}") from exc
+    _validate_catalog(catalog, path)
+    return catalog
+
+
+def _validate_catalog(catalog: CompetitorCatalog, path: Path) -> None:
+    capability_ids = [capability.id for capability in catalog.capabilities]
+    if len(capability_ids) != len(set(capability_ids)):
+        raise ValueError(f"{path} repeats a capability id")
+    product_ids = [product.id for product in catalog.products]
+    if len(product_ids) != len(set(product_ids)):
+        raise ValueError(f"{path} repeats a competitor id")
+    names = [product.name for product in catalog.products]
+    if len(names) != len(set(names)):
+        raise ValueError(f"{path} repeats a competitor name")
+    kinds = {capability.id: capability.kind for capability in catalog.capabilities}
+    for product in catalog.products:
+        for move in product.moves:
+            kind = kinds.get(move.capability)
+            if kind is None:
+                raise ValueError(
+                    f"{path}: {product.name} references unknown capability {move.capability}"
+                )
+            if kind.value == "feature" and not isinstance(move.value, bool):
+                raise ValueError(
+                    f"{path}: {product.name} {move.capability} must be true or false"
+                )
+            if kind.value != "feature" and (isinstance(move.value, bool) or not isinstance(move.value, int)):
+                raise ValueError(
+                    f"{path}: {product.name} {move.capability} must be a number"
+                )
 
 
 def _reject_duplicate_ids(signals: list[Signal]) -> None:

@@ -7,9 +7,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from discovery.models import (
+    CompetitorCatalog,
+    CompetitorIntelligence,
     CycleReport,
+    OpportunityCandidate,
+    OpportunityGraph,
     MarketSignal,
     Opportunity,
+    UserIntelligence,
     ProductContext,
     ReviewEntry,
     ReviewStatus,
@@ -235,6 +240,62 @@ def replace_market_signals(connection: object, signals: list[MarketSignal]) -> l
             (signal.id, signal.model_dump_json(), stamp),
         )
     return signals
+
+
+def save_user_intelligence(connection: object, report: UserIntelligence) -> None:
+    _set_meta(connection, "user_intelligence", report.model_dump_json())
+
+
+def load_user_intelligence(connection: object) -> UserIntelligence | None:
+    raw = _get_meta(connection, "user_intelligence")
+    if not raw:
+        return None
+    return UserIntelligence.model_validate_json(raw)
+
+
+def save_catalog(connection: object, catalog: CompetitorCatalog) -> None:
+    _set_meta(connection, "competitor_catalog", catalog.model_dump_json())
+
+
+def load_catalog(connection: object) -> CompetitorCatalog:
+    raw = _get_meta(connection, "competitor_catalog")
+    if not raw:
+        return CompetitorCatalog()
+    return CompetitorCatalog.model_validate_json(raw)
+
+
+def save_candidates(connection: object, candidates: list[OpportunityCandidate]) -> None:
+    payload = [candidate.model_dump(mode="json") for candidate in candidates]
+    _set_meta(connection, "opportunity_candidates", json.dumps(payload))
+
+
+def load_candidates(connection: object) -> list[OpportunityCandidate]:
+    raw = _get_meta(connection, "opportunity_candidates")
+    if not raw:
+        return []
+    return [OpportunityCandidate.model_validate(item) for item in json.loads(raw)]
+
+
+def save_graph(connection: object, graph: OpportunityGraph) -> None:
+    _set_meta(connection, "opportunity_graph", graph.model_dump_json())
+
+
+def load_graph(connection: object) -> OpportunityGraph | None:
+    raw = _get_meta(connection, "opportunity_graph")
+    if not raw:
+        return None
+    return OpportunityGraph.model_validate_json(raw)
+
+
+def save_competitor_intelligence(connection: object, report: CompetitorIntelligence) -> None:
+    _set_meta(connection, "competitor_intelligence", report.model_dump_json())
+
+
+def load_competitor_intelligence(connection: object) -> CompetitorIntelligence | None:
+    raw = _get_meta(connection, "competitor_intelligence")
+    if not raw:
+        return None
+    return CompetitorIntelligence.model_validate_json(raw)
 
 
 def list_market_signals(connection: object) -> list[MarketSignal]:

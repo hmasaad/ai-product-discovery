@@ -33,6 +33,11 @@ class Polarity(str, Enum):
     neutral = "neutral"
 
 
+class EvidenceSide(str, Enum):
+    support = "support"
+    contradict = "contradict"
+
+
 class Gap(str, Enum):
     unserved = "unserved"
     contested = "contested"
@@ -88,6 +93,21 @@ class Theme(BaseModel):
     idea_summary: str
     risks: list[str] = Field(default_factory=list)
     experiments: list[str] = Field(default_factory=list)
+    solutions: list[str] = Field(default_factory=list)
+    mvp: list[str] = Field(default_factory=list)
+    open_questions: list[str] = Field(default_factory=list)
+    experiment: str = ""
+
+
+class UserChannel(str, Enum):
+    app_review = "app_review"
+    support_ticket = "support_ticket"
+    feature_request = "feature_request"
+    survey = "survey"
+    interview = "interview"
+    community = "community"
+    product_analytics = "product_analytics"
+    user_feedback = "user_feedback"
 
 
 class Signal(BaseModel):
@@ -105,6 +125,9 @@ class Signal(BaseModel):
     metrics: dict[str, float] = Field(default_factory=dict)
     tags: list[str] = Field(default_factory=list)
     url: str | None = None
+    channel: UserChannel | None = None
+    volume: int = Field(default=1, ge=1)
+    stance: EvidenceSide | None = None
 
     @model_validator(mode="after")
     def kind_matches_pillar(self) -> Self:
@@ -196,6 +219,204 @@ class MarketBrief(BaseModel):
     facets: list[str]
 
 
+class ProblemCluster(BaseModel):
+    """One complaint cluster from the user intelligence agent."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    theme: str
+    label: str
+    share: float = Field(ge=0, le=1)
+    volume: int = Field(ge=0)
+    channels: list[UserChannel]
+    examples: list[str]
+    corroborated_by: list[str] = Field(default_factory=list)
+    unmet: bool
+    unmet_need: str = ""
+
+
+class UserIntelligence(BaseModel):
+    """Clustered complaints and the unmet needs inside them."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    feedback_count: int = 0
+    other_volume: int = 0
+    clusters: list[ProblemCluster] = Field(default_factory=list)
+    unmet_needs: list[ProblemCluster] = Field(default_factory=list)
+
+
+class CapabilityKind(str, Enum):
+    feature = "feature"
+    count = "count"
+    price = "price"
+
+
+class Capability(BaseModel):
+    """One row in the competitor matrix."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    label: str
+    kind: CapabilityKind
+    direction: str = ""
+    themes: list[str] = Field(default_factory=list)
+
+
+class CatalogMove(BaseModel):
+    """A dated observation of one capability on one competitor."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capability: str
+    observed_at: date
+    value: bool | int
+    note: str = ""
+
+
+class CompetitorProduct(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    name: str
+    moves: list[CatalogMove]
+
+
+class CompetitorCatalog(BaseModel):
+    """Structured competitor observations. The agent builds the matrix from this."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capabilities: list[Capability] = Field(default_factory=list)
+    products: list[CompetitorProduct] = Field(default_factory=list)
+
+
+class MatrixRow(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    capability_id: str
+    label: str
+    kind: CapabilityKind
+    cells: list[str]
+
+
+class CompetitorRead(BaseModel):
+    """Behavior, trajectory, and direction for one competitor."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    product_id: str
+    name: str
+    behavior: list[str]
+    trajectory: str
+    direction: str
+
+
+class CompetitorGap(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    capability_id: str
+    statement: str
+    themes: list[str] = Field(default_factory=list)
+
+
+class CompetitorIntelligence(BaseModel):
+    """Matrix, then the chain from behavior to a market gap."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    products: list[str] = Field(default_factory=list)
+    product_ids: list[str] = Field(default_factory=list)
+    rows: list[MatrixRow] = Field(default_factory=list)
+    reads: list[CompetitorRead] = Field(default_factory=list)
+    race: str = ""
+    notes: list[str] = Field(default_factory=list)
+    gaps: list[CompetitorGap] = Field(default_factory=list)
+
+
+class CompetitorBrief(BaseModel):
+    """The competitor read attached to a product opportunity."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    race: str
+    gap: str
+
+
+class UserBrief(BaseModel):
+    """The user-intelligence finding attached to a product opportunity."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    share: float
+    volume: int
+    feedback_count: int
+    unmet: bool
+    unmet_need: str = ""
+
+
+class OpportunityChain(BaseModel):
+    """Signal, problem, segment, pain, existing solutions, gap, opportunity."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    signal: str
+    problem: str
+    segment: str
+    pain: str
+    existing_solutions: str
+    gap: str
+    opportunity: str
+
+
+class ValidationPoint(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    text: str
+    signal_id: str = ""
+
+
+class ValidationQuestion(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    question: str
+    answer: str
+    status: str
+
+
+class ValidationBrief(BaseModel):
+    """Evidence for the opportunity, and the evidence that cuts against it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    supporting: list[ValidationPoint] = Field(default_factory=list)
+    contradicting: list[ValidationPoint] = Field(default_factory=list)
+    questions: list[ValidationQuestion] = Field(default_factory=list)
+    challenge: str = ""
+
+
+class ProductOpportunityBrief(BaseModel):
+    """The handoff a product manager reads: evidence and an experiment."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    problem: str
+    target_users: str
+    observed_pain: str
+    existing_solutions: list[str]
+    gap: str
+    opportunity: str
+    mvp: list[str]
+    evidence: list[str]
+    risks: list[str]
+    open_questions: list[str]
+    experiment: str
+
+
 class Check(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -234,7 +455,12 @@ class Opportunity(BaseModel):
     next_steps: list[str]
     evidence: list[Evidence]
     signal_ids: list[str]
+    chain: OpportunityChain | None = None
+    challenge: ValidationBrief | None = None
+    product_brief: ProductOpportunityBrief | None = None
     market: MarketBrief | None = None
+    user: UserBrief | None = None
+    competitor: CompetitorBrief | None = None
     status: ReviewStatus = ReviewStatus.pending_review
     review_note: str = ""
 
@@ -244,6 +470,98 @@ class Opportunity(BaseModel):
         for item in self.evidence:
             grouped[item.pillar].append(item)
         return [(pillar.value, grouped[pillar]) for pillar in order]
+
+
+class OpportunityCandidate(BaseModel):
+    """One detected opportunity, including signals that are not ready to review."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    theme: str
+    label: str
+    signal_ids: list[str]
+    chain: OpportunityChain
+    review_id: str = ""
+
+
+class NodeKind(str, Enum):
+    market = "market"
+    trend = "trend"
+    users = "users"
+    competitors = "competitors"
+    problem = "problem"
+    gap = "gap"
+    opportunity = "opportunity"
+    feature = "feature"
+    product = "product"
+    mvp = "mvp"
+    business_case = "business_case"
+
+
+class GraphSource(BaseModel):
+    """A signal or agent finding a graph node is citing."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    signal_id: str = ""
+    title: str
+    source: str
+    observed_at: str = ""
+    node_id: str = ""
+
+
+class GraphNode(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    kind: NodeKind
+    title: str
+    detail: str = ""
+    sources: list[GraphSource] = Field(default_factory=list)
+
+
+class GraphEdge(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    origin: str
+    target: str
+    opportunity_id: str
+
+
+class OpportunityGraph(BaseModel):
+    """Market, trend, users, competitors, problems, gaps, and the bets they support."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    nodes: list[GraphNode] = Field(default_factory=list)
+    edges: list[GraphEdge] = Field(default_factory=list)
+
+    def node(self, node_id: str) -> GraphNode | None:
+        return next((item for item in self.nodes if item.id == node_id), None)
+
+
+class OpportunityTrace(BaseModel):
+    """Why one opportunity exists, and the sources along the path."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    opportunity_id: str
+    title: str
+    why: str
+    market: GraphNode | None = None
+    trend: GraphNode | None = None
+    users: GraphNode | None = None
+    competitors: GraphNode | None = None
+    problem: GraphNode | None = None
+    gap: GraphNode | None = None
+    opportunity: GraphNode | None = None
+    feature: GraphNode | None = None
+    product: GraphNode | None = None
+    mvp: GraphNode | None = None
+    business_case: GraphNode | None = None
+    paths: list[list[str]] = Field(default_factory=list)
+    sources: list[GraphSource] = Field(default_factory=list)
 
 
 class ReviewEntry(BaseModel):
@@ -261,3 +579,6 @@ class CycleReport(BaseModel):
     by_verdict: dict[str, int]
     opportunities: list[Opportunity]
     market_signals: list[MarketSignal] = Field(default_factory=list)
+    user_intelligence: UserIntelligence | None = None
+    competitor_intelligence: CompetitorIntelligence | None = None
+    candidates: list[OpportunityCandidate] = Field(default_factory=list)

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Competitor intelligence · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Competitor intelligence agent</p>
+    <h1>Competitor matrix</h1>
+    <p class="mission">Behavior becomes a feature trajectory, the trajectory becomes a strategic direction, and the direction leaves a market gap.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+  </div>
+</section>
+
+{% if report and report.rows %}
+<section class="card">
+  <h2>Competitor matrix</h2>
+  <div class="matrix-wrap">
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th></th>
+          {% for name in report.products %}<th>{{ name }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report.rows %}
+        <tr>
+          <th scope="row">{{ row.label }}</th>
+          {% for cell in row.cells %}
+          <td class="{% if cell == '✓' %}cell-yes{% elif cell == '✗' %}cell-no{% endif %}" {% if cell == '✓' %}title="Yes"{% elif cell == '✗' %}title="No"{% endif %}>{{ cell }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section-head">
+  <h2>Competitor behavior</h2>
+</section>
+<div class="cards chain">
+  {% for read in report.reads %}
+  <article class="card competitor-signal">
+    <h2>{{ read.name }}</h2>
+    <p class="chain-step">Behavior</p>
+    <ul class="plain">
+      {% for line in read.behavior %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+    <p class="chain-step">Feature trajectory</p>
+    <p>{{ read.trajectory }}</p>
+    <p class="chain-step">Strategic direction</p>
+    <p class="implication">{{ read.direction }}</p>
+  </article>
+  {% endfor %}
+</div>
+
+<section class="card">
+  <h2>Feature trajectory</h2>
+  <p>{{ report.race }}</p>
+  {% for note in report.notes %}<p>{{ note }}</p>{% endfor %}
+</section>
+
+<section class="section-head">
+  <h2>Potential market gap</h2>
+</section>
+{% if report.gaps %}
+<div class="cards">
+  {% for gap in report.gaps %}
+  <article class="card">
+    <p>{{ gap.statement }}</p>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="empty">
+  <h2>No market gap yet</h2>
+  <p>The matrix is filled in, and the recent moves do not leave an opening.</p>
+</section>
+{% endif %}
+{% else %}
+<section class="empty">
+  <h2>No competitor matrix yet</h2>
+  <p>Load the sample workspace, or add competitors.json with dated feature, integration, and pricing observations.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

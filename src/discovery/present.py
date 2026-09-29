@@ -9,6 +9,20 @@ GAP_LABELS = {
     "table_stakes": "Table stakes",
 }
 
+NODE_LABELS = {
+    "market": "Market",
+    "trend": "Trend",
+    "users": "Users",
+    "competitors": "Competitors",
+    "problem": "Problem",
+    "gap": "Gap",
+    "opportunity": "Opportunity",
+    "feature": "Feature",
+    "product": "Product",
+    "mvp": "MVP",
+    "business_case": "Business case",
+}
+
 VERDICT_LABELS = {
     "pursue": "Pursue",
     "investigate": "Investigate",
@@ -38,6 +52,17 @@ KIND_LABELS = {
     "analytics": "Analytics",
     "feature": "Feature",
     "usage": "Usage",
+}
+
+CHANNEL_LABELS = {
+    "app_review": "App review",
+    "support_ticket": "Support ticket",
+    "feature_request": "Feature request",
+    "survey": "Survey",
+    "interview": "Interview",
+    "community": "Community",
+    "product_analytics": "Product analytics",
+    "user_feedback": "User feedback",
 }
 
 FACET_LABELS = {
