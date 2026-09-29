@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ opportunity.title }} · {{ context.name }}{% endblock %}
+{% block body %}
+<article class="memo">
+  <p class="eyebrow"><a href="/">{{ context.name }}</a> · Product opportunity memo</p>
+  <header class="memo-header">
+    <div class="pills">
+      <span class="pill verdict-{{ opportunity.verdict.value }}">{{ labels.verdict[opportunity.verdict.value] }}</span>
+      <span class="pill gap">{{ labels.gap[opportunity.gap.value] }}</span>
+      <span class="pill status-{{ opportunity.status.value }}">{{ labels.status[opportunity.status.value] }}</span>
+    </div>
+    <h1>{{ opportunity.title }}</h1>
+    <p class="memo-meta">{{ context.category }} · {{ context.audience }} · opportunity {{ opportunity.scores.opportunity | pct }} · confidence {{ opportunity.scores.confidence | pct }}</p>
+  </header>
+
+  <section>
+    <h2>Validation</h2>
+    <p class="rationale">{{ opportunity.rationale }}</p>
+  </section>
+  <section>
+    <h2>Problem</h2>
+    <p>{{ opportunity.problem }}</p>
+  </section>
+  <section>
+    <h2>Why now</h2>
+    <p>{{ opportunity.why_now }}</p>
+    <p class="mapping">{{ opportunity.mapping_note }}</p>
+  </section>
+  {% if opportunity.market %}
+  <section class="market-signal">
+    <h2>Market signal</h2>
+    <p class="trend-name">Trend: {{ opportunity.market.trend }}</p>
+    <ul class="plain">
+      {% for line in opportunity.market.evidence %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+    <p class="implication">Potential implication: {{ opportunity.market.implication }}</p>
+  </section>
+  {% endif %}
+  <section>
+    <h2>The bet</h2>
+    <p>{{ opportunity.idea_summary }}</p>
+  </section>
+  <section>
+    <h2>Evidence</h2>
+    <div class="evidence-grid">
+      {% for pillar, items in opportunity.evidence_by_pillar() %}
+      <div class="evidence-col pillar-{{ pillar }}">
+        <h3>{{ labels.pillar[pillar] }}</h3>
+        {% for item in items %}
+        <blockquote>
+          <p class="evidence-title">{{ item.title }}</p>
+          <p>{{ item.excerpt }}</p>
+          <footer>
+            {{ labels.kind[item.kind.value] }} · {{ item.source }} · {{ item.observed_at | pretty_date }}
+            {% for key, value in item.metrics.items() %}
+              · {{ value | metric(key) }}
+            {% endfor %}
+          </footer>
+        </blockquote>
+        {% else %}
+        <p class="empty-pillar">No {{ labels.pillar[pillar] | lower }} evidence.</p>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  <section>
+    <h2>Checks</h2>
+    <ul class="check-list">
+      {% for check in opportunity.checks %}
+      <li class="{% if check.passed %}pass{% else %}fail{% endif %}">
+        <strong>{{ check.label }}</strong>
+        <span>{{ check.detail }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="two">
+    <div>
+      <h2>Risks</h2>
+      <ul class="plain">{% for risk in opportunity.risks %}<li>{{ risk }}</li>{% endfor %}</ul>
+    </div>
+    <div>
+      <h2>Next experiment</h2>
+      <ul class="plain">{% for step in opportunity.next_steps %}<li>{{ step }}</li>{% endfor %}</ul>
+    </div>
+  </section>
+
+  {% if reviews %}
+  <section>
+    <h2>Review history</h2>
+    <ol class="history">
+      {% for entry in reviews %}
+      <li>
+        <strong>{{ labels.status[entry.action.value] }}</strong>
+        <span>{{ entry.created_at | pretty_time }}</span>
+        {% if entry.note %}<p>{{ entry.note }}</p>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+
+  <form class="review-form" method="post" action="/opportunities/{{ opportunity.id }}/review">
+    <input type="hidden" name="next_url" value="/opportunities/{{ opportunity.id }}">
+    <label>
+      <span>Review note</span>
+      <input type="text" name="note" maxlength="500" value="{{ opportunity.review_note }}" placeholder="What should the product manager know?">
+    </label>
+    <div class="review-actions">
+      <button type="submit" name="action" value="approved" class="button button-primary">Approve</button>
+      <button type="submit" name="action" value="needs_evidence" class="button">Needs evidence</button>
+      <button type="submit" name="action" value="rejected" class="button button-quiet">Reject</button>
+    </div>
+  </form>
+</article>
+{% endblock %}

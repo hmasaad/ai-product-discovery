@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}{{ context.name }} · AI Product Discovery{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">{{ context.category }}</p>
+    <h1>{{ context.name }}</h1>
+    <p class="mission">{{ context.mission }}</p>
+    {% if last_cycle %}
+      <p class="cycle-meta">Last cycle {{ last_cycle.ran_at | pretty_time }} · {{ last_cycle.signal_count }} signals · {{ last_cycle.opportunity_count }} opportunities</p>
+    {% endif %}
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+    <form method="post" action="/demo">
+      <button type="submit" class="button">Load sample</button>
+    </form>
+  </div>
+</section>
+
+<section class="architecture" aria-label="Discovery pipeline">
+  <article class="arch-card pillar-market">
+    <h2>Market intel</h2>
+    <p class="arch-count">{{ pillar_counts.market }}</p>
+    <ul>
+      <li>Competitors</li>
+      <li>Trends</li>
+      <li>News</li>
+    </ul>
+  </article>
+  <article class="arch-card pillar-user">
+    <h2>User intel</h2>
+    <p class="arch-count">{{ pillar_counts.user }}</p>
+    <ul>
+      <li>Reviews</li>
+      <li>Feedback</li>
+      <li>Forums</li>
+    </ul>
+  </article>
+  <article class="arch-card pillar-product">
+    <h2>Product intel</h2>
+    <p class="arch-count">{{ pillar_counts.product }}</p>
+    <ul>
+      <li>Analytics</li>
+      <li>Features</li>
+      <li>Usage</li>
+    </ul>
+  </article>
+  <ol class="engine-rail">
+    <li>Problem identification</li>
+    <li>Opportunity mapping</li>
+    <li>Idea generation</li>
+    <li>Validation agent</li>
+    <li class="engine-out">{{ pursue_count }} pursue</li>
+  </ol>
+</section>
+
+{% if queue %}
+  <section class="section-head">
+    <h2>Handoff to the product manager</h2>
+    <p>Approved opportunities stay here as decision memos. The evidence and the verdict travel with them.</p>
+  </section>
+{% else %}
+  <nav class="filters" aria-label="Filter opportunities">
+    <a href="/" {% if not active_verdict and not active_status %}aria-current="page"{% endif %}>Open</a>
+    <a href="/?verdict=pursue" {% if active_verdict == 'pursue' %}aria-current="page"{% endif %}>Pursue {{ verdict_counts.pursue }}</a>
+    <a href="/?verdict=investigate" {% if active_verdict == 'investigate' %}aria-current="page"{% endif %}>Investigate {{ verdict_counts.investigate }}</a>
+    <a href="/?verdict=park" {% if active_verdict == 'park' %}aria-current="page"{% endif %}>Park {{ verdict_counts.park }}</a>
+    <a href="/?status=needs_evidence" {% if active_status == 'needs_evidence' %}aria-current="page"{% endif %}>Needs evidence {{ status_counts.needs_evidence }}</a>
+    <a href="/?status=approved" {% if active_status == 'approved' %}aria-current="page"{% endif %}>Approved {{ status_counts.approved }}</a>
+    <a href="/?status=rejected" {% if active_status == 'rejected' %}aria-current="page"{% endif %}>Rejected {{ status_counts.rejected }}</a>
+  </nav>
+{% endif %}
+
+{% if opportunities %}
+  <div class="table-wrap">
+    <table class="summary">
+      <thead>
+        <tr>
+          <th>Verdict</th>
+          <th>Opportunity</th>
+          <th>Gap</th>
+          <th>Score</th>
+          <th>Review</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for opp in opportunities %}
+        <tr>
+          <td><span class="pill verdict-{{ opp.verdict.value }}">{{ labels.verdict[opp.verdict.value] }}</span></td>
+          <td><a href="#{{ opp.id }}">{{ opp.title }}</a></td>
+          <td>{{ labels.gap[opp.gap.value] }}</td>
+          <td class="num">{{ opp.scores.opportunity | pct }}</td>
+          <td><span class="pill status-{{ opp.status.value }}">{{ labels.status[opp.status.value] }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cards">
+    {% for opp in opportunities %}
+    {% set return_to = request.url.path ~ ('?' ~ request.url.query if request.url.query else '') %}
+    <article class="card verdict-edge-{{ opp.verdict.value }}" id="{{ opp.id }}">
+      <header class="card-top">
+        <div class="pills">
+          <span class="pill verdict-{{ opp.verdict.value }}">{{ labels.verdict[opp.verdict.value] }}</span>
+          <span class="pill gap">{{ labels.gap[opp.gap.value] }}</span>
+          <span class="pill status-{{ opp.status.value }}">{{ labels.status[opp.status.value] }}</span>
+        </div>
+        <p class="confidence">Confidence {{ opp.scores.confidence | pct }}</p>
+      </header>
+      <h2><a href="/opportunities/{{ opp.id }}">{{ opp.title }}</a></h2>
+      <p class="theme-label">{{ opp.label }}</p>
+      <p class="rationale">{{ opp.rationale }}</p>
+
+      <div class="scores" aria-label="Scores">
+        <div class="score">
+          <span>Problem</span>
+          <div class="bar" title="Strength, volume, and pillar coverage"><span style="width: {{ opp.scores.problem | pct }}%"></span></div>
+          <strong>{{ opp.scores.problem | pct }}</strong>
+        </div>
+        <div class="score">
+          <span>Opportunity</span>
+          <div class="bar" title="Problem score, adjusted for market timing and competitive gap"><span style="width: {{ opp.scores.opportunity | pct }}%"></span></div>
+          <strong>{{ opp.scores.opportunity | pct }}</strong>
+        </div>
+        <div class="score">
+          <span>Validation</span>
+          <div class="bar" title="Share of validation checks that passed"><span style="width: {{ opp.scores.validation | pct }}%"></span></div>
+          <strong>{{ opp.scores.validation | pct }}</strong>
+        </div>
+      </div>
+
+      <section class="block">
+        <h3>Problem</h3>
+        <p>{{ opp.problem }}</p>
+      </section>
+      <section class="block">
+        <h3>Why now</h3>
+        <p>{{ opp.why_now }}</p>
+        <p class="mapping">{{ opp.mapping_note }}</p>
+      </section>
+      {% if opp.market %}
+      <section class="block market-signal">
+        <h3>Market signal</h3>
+        <p class="trend-name">Trend: {{ opp.market.trend }}</p>
+        <ul class="plain">
+          {% for line in opp.market.evidence %}<li>{{ line }}</li>{% endfor %}
+        </ul>
+        <p class="implication">Potential implication: {{ opp.market.implication }}</p>
+      </section>
+      {% endif %}
+      <section class="block">
+        <h3>The bet</h3>
+        <p>{{ opp.idea_summary }}</p>
+      </section>
+
+      <section class="block">
+        <h3>Evidence</h3>
+        <div class="evidence-grid">
+          {% for pillar, items in opp.evidence_by_pillar() %}
+          <div class="evidence-col pillar-{{ pillar }}">
+            <h4>{{ labels.pillar[pillar] }}</h4>
+            {% if items %}
+              {% for item in items %}
+              <blockquote>
+                <p class="evidence-title">{{ item.title }}</p>
+                <p>{{ item.excerpt }}</p>
+                <footer>
+                  {{ labels.kind[item.kind.value] }} · {{ item.source }} · {{ item.observed_at | pretty_date }}
+                  · {{ labels.polarity[item.polarity.value] }}
+                  {% for key, value in item.metrics.items() %}
+                    · {{ value | metric(key) }}
+                  {% endfor %}
+                </footer>
+              </blockquote>
+              {% endfor %}
+            {% else %}
+              <p class="empty-pillar">No {{ labels.pillar[pillar] | lower }} evidence.</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <details class="checks">
+        <summary>Validation checks</summary>
+        <ul>
+          {% for check in opp.checks %}
+          <li class="{% if check.passed %}pass{% else %}fail{% endif %}">
+            <strong>{{ check.label }}</strong>
+            <span>{{ check.detail }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </details>
+
+      <div class="two">
+        <section>
+          <h3>Risks</h3>
+          <ul class="plain">
+            {% for risk in opp.risks %}<li>{{ risk }}</li>{% endfor %}
+          </ul>
+        </section>
+        <section>
+          <h3>Next</h3>
+          <ul class="plain">
+            {% for step in opp.next_steps %}<li>{{ step }}</li>{% endfor %}
+          </ul>
+        </section>
+      </div>
+
+      <form class="review-form" method="post" action="/opportunities/{{ opp.id }}/review">
+        <input type="hidden" name="next_url" value="{{ return_to }}#{{ opp.id }}">
+        <label>
+          <span>Review note</span>
+          <input type="text" name="note" maxlength="500" value="{{ opp.review_note }}" placeholder="What should the product manager know?">
+        </label>
+        <div class="review-actions">
+          <button type="submit" name="action" value="approved" class="button button-primary">Approve</button>
+          <button type="submit" name="action" value="needs_evidence" class="button">Needs evidence</button>
+          <button type="submit" name="action" value="rejected" class="button button-quiet">Reject</button>
+        </div>
+      </form>
+    </article>
+    {% endfor %}
+  </div>
+{% elif queue %}
+  <section class="empty">
+    <h2>The queue is empty</h2>
+    <p>Approve a bet on the review board and its memo will land here for the product manager.</p>
+    <a class="button button-primary" href="/">Back to the board</a>
+  </section>
+{% else %}
+  <section class="empty">
+    <h2>No opportunities on the board</h2>
+    {% if signal_count == 0 %}
+      <p>Load the Northstar sample to see a full cycle, or ingest a signals file from the command line.</p>
+    {% else %}
+      <p>The current evidence did not form an opportunity. Add signals or run another cycle.</p>
+    {% endif %}
+  </section>
+{% endif %}
+
+<footer class="site-footer">
+  <p>Judgments use an explicit evidence rubric. Approved memos are the handoff for a product manager.</p>
+</footer>
+{% endblock %}

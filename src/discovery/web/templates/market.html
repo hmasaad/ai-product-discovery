@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Market research · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Market research agent</p>
+    <h1>Market signals</h1>
+    <p class="mission">Trends, the evidence behind them, and what each one might mean for {{ context.name }}.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+  </div>
+</section>
+
+{% if signals %}
+<div class="cards">
+  {% for signal in signals %}
+  <article class="card market-signal">
+    <p class="eyebrow">Market signal</p>
+    <h2>{{ signal.trend }}</h2>
+    <div class="pills">
+      {% for facet in signal.facets %}
+      <span class="pill gap">{{ labels.facet[facet.value] }}</span>
+      {% endfor %}
+    </div>
+    <section class="block">
+      <h3>Evidence</h3>
+      <ul class="evidence-lines">
+        {% for item in signal.evidence %}
+        <li>
+          <span>{{ item.statement }}</span>
+          <small>{{ item.source }} · {{ item.observed_at | pretty_date }}</small>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="block">
+      <h3>Potential implication</h3>
+      <p class="rationale">{{ signal.implication }}</p>
+    </section>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="empty">
+  <h2>No market signals yet</h2>
+  <p>Load the sample workspace or ingest market evidence, then run a cycle.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

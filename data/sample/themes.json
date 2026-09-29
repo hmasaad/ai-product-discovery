@@ -1,0 +1,88 @@
+[
+  {
+    "id": "instrumentation",
+    "label": "Event instrumentation",
+    "keywords": ["instrumentation", "tracking plan", "event tracking"],
+    "problem": "Teams stall before the product is trustworthy because event instrumentation depends on engineering and tracking plans are hard to keep.",
+    "idea_title": "Guided tracking plans",
+    "idea_summary": "Give product managers a guided tracking plan that drafts the event spec, shows what is still missing, and checks implementation without waiting on a full engineering cycle.",
+    "risks": [
+      "Loose governance could flood the warehouse with events nobody trusts."
+    ],
+    "experiments": [
+      "Pilot guided tracking plans with five workspaces stalled at instrumentation. Success is a trusted funnel in days, not weeks.",
+      "Compare activation for workspaces that adopt a tracking plan against the current stall rate."
+    ]
+  },
+  {
+    "id": "self_serve",
+    "label": "Self-serve analysis",
+    "keywords": ["self-serve", "self serve", "data team", "without sql", "analyst seats"],
+    "problem": "Product managers cannot answer routine questions themselves, so analysis waits on specialists or leaks into spreadsheets.",
+    "idea_title": "Analysis PMs can run themselves",
+    "idea_summary": "Build exploration around the questions product managers already ask, so funnel and segment answers do not require SQL or a ticket to the data team.",
+    "risks": [
+      "A simplified explorer can still produce misleading cuts if definitions stay ambiguous."
+    ],
+    "experiments": [
+      "Put a PM-only question flow in front of five teams who currently export to spreadsheets.",
+      "Measure whether PM use of funnel analysis rises without analyst help."
+    ]
+  },
+  {
+    "id": "grounded_ai",
+    "label": "Grounded insights",
+    "keywords": ["ai copilot", "ai insight", "ai insights"],
+    "problem": "Automated insights are easy to ignore because they are not tied to the events a team actually tracks.",
+    "idea_title": "Insights that cite our events",
+    "idea_summary": "Stop emitting generic insight cards. Generate the few changes that cite this workspace's events and definitions, and show the evidence under the sentence.",
+    "risks": [
+      "Cited-but-wrong answers will burn trust faster than generic ones."
+    ],
+    "experiments": [
+      "Replace generic insight cards with answers that cite the workspace's own events, then remeasure the dismiss rate."
+    ]
+  },
+  {
+    "id": "natural_language",
+    "label": "Natural language questions",
+    "keywords": ["natural language"],
+    "problem": "Natural language questions are only useful when the answers stay faithful to this product's events and definitions.",
+    "idea_title": "Natural language tied to the tracking plan",
+    "idea_summary": "Let people ask in plain language, but resolve every question against the tracking plan and refuse an answer the events cannot support.",
+    "risks": [
+      "A fluent wrong answer looks more authoritative than a chart people already distrust."
+    ],
+    "experiments": [
+      "Test natural language questions on three tracking plans and record where the answer is wrong or refused."
+    ]
+  },
+  {
+    "id": "session_replay",
+    "label": "Session replay",
+    "keywords": ["session replay"],
+    "problem": "Activation questions are often answered by watching sessions, which the market already bundles with product analytics.",
+    "idea_title": "Bundled session replay",
+    "idea_summary": "Bundle session replay into activation investigations so people can move from a drop-off to the sessions behind it.",
+    "risks": [
+      "Replaying sessions can become a time sink that does not change the roadmap."
+    ],
+    "experiments": [
+      "Before building replay, list activation questions that current analytics cannot answer."
+    ]
+  },
+  {
+    "id": "dark_mode",
+    "label": "Dark theme",
+    "keywords": ["dark mode"],
+    "problem": "A small set of users would prefer a dark theme for late sessions.",
+    "idea_title": "Dark theme",
+    "idea_summary": "Offer a dark theme for people working late.",
+    "risks": [
+      "Visual preferences rarely move activation or retention on their own."
+    ],
+    "experiments": [
+      "Do not schedule this until the same request shows up in retention, lost deals, or repeated feedback with impact."
+    ]
+  }
+]
