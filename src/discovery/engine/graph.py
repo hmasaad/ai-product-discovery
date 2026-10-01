@@ -32,6 +32,7 @@ def build_opportunity_graph(
     market_signals: list[MarketSignal] | None = None,
     user_intelligence: UserIntelligence | None = None,
     competitor_intelligence: CompetitorIntelligence | None = None,
+    learnings: list | None = None,
 ) -> OpportunityGraph:
     nodes: dict[str, GraphNode] = {
         "market": GraphNode(
@@ -62,7 +63,14 @@ def build_opportunity_graph(
             clusters.get(opportunity.theme),
             competitor_intelligence,
         )
-    return OpportunityGraph(nodes=list(nodes.values()), edges=edges)
+    graph = OpportunityGraph(nodes=list(nodes.values()), edges=edges)
+    from discovery.agents.experiment import design
+    from discovery.agents.learning import attach_learning
+
+    for opportunity in opportunities:
+        plan = design(opportunity, learnings=learnings)
+        graph = attach_learning(graph, opportunity, plan)
+    return graph
 
 
 def trace(graph: OpportunityGraph, opportunity_id: str) -> OpportunityTrace | None:
@@ -95,6 +103,15 @@ def trace(graph: OpportunityGraph, opportunity_id: str) -> OpportunityTrace | No
         business_case=by_kind[NodeKind.business_case],
         paths=paths,
         sources=sources,
+        hypothesis=by_kind[NodeKind.hypothesis],
+        experiment=by_kind[NodeKind.experiment],
+        observation=by_kind[NodeKind.observation],
+        learning=by_kind[NodeKind.learning],
+        decision=by_kind[NodeKind.decision],
+        product_change=by_kind[NodeKind.product_change],
+        new_observation=by_kind[NodeKind.new_observation],
+        new_hypothesis=by_kind[NodeKind.new_hypothesis],
+        learning_path=_learning_path(graph, opportunity_id),
     )
 
 
@@ -239,6 +256,12 @@ def _branch(
         ),
     )
     _link(edges, "product", case_id, opportunity_id)
+
+
+def _learning_path(graph: OpportunityGraph, opportunity_id: str) -> list[str]:
+    from discovery.agents.learning import learning_ids
+
+    return [node_id for node_id in learning_ids(opportunity_id) if graph.node(node_id)]
 
 
 def trace_kinds(graph: OpportunityGraph, path: list[str]) -> list[str]:

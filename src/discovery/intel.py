@@ -11,10 +11,11 @@ from typing import Protocol
 
 from pydantic import TypeAdapter, ValidationError
 
-from discovery.models import CompetitorCatalog, IntelPillar, ProductContext, Signal, Theme
+from discovery.models import CompetitorCatalog, IntelPillar, MemoryRecord, ProductContext, Signal, Theme
 
 _SIGNAL_LIST = TypeAdapter(list[Signal])
 _THEME_LIST = TypeAdapter(list[Theme])
+_MEMORY_LIST = TypeAdapter(list[MemoryRecord])
 
 
 class IntelSource(Protocol):
@@ -82,6 +83,16 @@ def load_themes(path: Path) -> list[Theme]:
         raise ValueError(f"{path} is not a theme list:\n{exc}") from exc
 
 
+def load_memory(path: Path) -> list[MemoryRecord]:
+    if not path.exists():
+        return []
+    payload = load_json(path)
+    try:
+        return _MEMORY_LIST.validate_python(payload)
+    except ValidationError as exc:
+        raise ValueError(f"{path} is not a memory record list:\n{exc}") from exc
+
+
 def load_signals(path: Path) -> list[Signal]:
     """Load signals from a JSON file or from every ``*.json`` file in a directory.
 
@@ -93,7 +104,7 @@ def load_signals(path: Path) -> list[Signal]:
     if path.is_dir():
         signals: list[Signal] = []
         for file in sorted(path.glob("*.json")):
-            if file.name in {"context.json", "themes.json", "competitors.json"}:
+            if file.name in {"context.json", "themes.json", "competitors.json", "memory.json"}:
                 continue
             signals.extend(load_signals(file))
         _reject_duplicate_ids(signals)

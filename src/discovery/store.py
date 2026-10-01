@@ -305,6 +305,89 @@ def list_market_signals(connection: object) -> list[MarketSignal]:
     return signals
 
 
+def save_outcomes(connection: object, records: list) -> None:
+    from discovery.models import MemoryRecord
+
+    payload = [MemoryRecord.model_validate(record).model_dump(mode="json") for record in records]
+    _set_meta(connection, "memory_outcomes", json.dumps(payload))
+
+
+def load_outcomes(connection: object) -> list:
+    from discovery.models import MemoryRecord
+
+    raw = _get_meta(connection, "memory_outcomes")
+    if not raw:
+        return []
+    return [MemoryRecord.model_validate(item) for item in json.loads(raw)]
+
+
+def save_execution_approval(connection: object, opportunity_id: str, note: str) -> None:
+    current = load_execution_approvals(connection)
+    current[opportunity_id] = note
+    _set_meta(connection, "execution_approvals", json.dumps(current))
+
+
+def load_execution_approvals(connection: object) -> dict[str, str]:
+    raw = _get_meta(connection, "execution_approvals")
+    if not raw:
+        return {}
+    payload = json.loads(raw)
+    return {str(key): str(value) for key, value in payload.items()}
+
+
+def save_experiment_readings(connection: object, opportunity_id: str, readings: list) -> None:
+    from discovery.models import MetricReading
+
+    current = _experiment_readings(connection)
+    current[opportunity_id] = [
+        MetricReading.model_validate(item).model_dump(mode="json") for item in readings
+    ]
+    _set_meta(connection, "experiment_readings", json.dumps(current))
+
+
+def load_experiment_readings(connection: object, opportunity_id: str) -> list:
+    from discovery.models import MetricReading
+
+    raw = _experiment_readings(connection).get(opportunity_id, [])
+    return [MetricReading.model_validate(item) for item in raw]
+
+
+def save_experiment_learnings(connection: object, records: list) -> None:
+    from discovery.models import ExperimentLearning
+
+    payload = [
+        ExperimentLearning.model_validate(record).model_dump(mode="json") for record in records
+    ]
+    _set_meta(connection, "experiment_learnings", json.dumps(payload))
+
+
+def load_experiment_learnings(connection: object) -> list:
+    from discovery.models import ExperimentLearning
+
+    raw = _get_meta(connection, "experiment_learnings")
+    if not raw:
+        return []
+    return [ExperimentLearning.model_validate(item) for item in json.loads(raw)]
+
+
+def remember_experiment_learning(connection: object, record) -> None:
+    from discovery.models import ExperimentLearning
+
+    stored = ExperimentLearning.model_validate(record)
+    current = [
+        item for item in load_experiment_learnings(connection) if item.opportunity_id != stored.opportunity_id
+    ]
+    current.append(stored)
+    save_experiment_learnings(connection, current)
+
+
+def _experiment_readings(connection: object) -> dict:
+    raw = _get_meta(connection, "experiment_readings")
+    if not raw:
+        return {}
+    return json.loads(raw)
+
+
 def list_reviews(connection: object, opportunity_id: str) -> list[ReviewEntry]:
     rows = connection.execute(
         """
@@ -314,6 +397,25 @@ def list_reviews(connection: object, opportunity_id: str) -> list[ReviewEntry]:
         order by id
         """,
         (opportunity_id,),
+    )
+    return [
+        ReviewEntry(
+            opportunity_id=row["opportunity_id"],
+            action=ReviewStatus(row["action"]),
+            note=row["note"],
+            created_at=row["created_at"],
+        )
+        for row in rows
+    ]
+
+
+def list_all_reviews(connection: object) -> list[ReviewEntry]:
+    rows = connection.execute(
+        """
+        select opportunity_id, action, note, created_at
+        from reviews
+        order by id
+        """
     )
     return [
         ReviewEntry(

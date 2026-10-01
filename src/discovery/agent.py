@@ -7,7 +7,11 @@ from discovery.agents.competitors import CompetitorIntelligenceAgent
 from discovery.agents.market import MarketResearchAgent
 from discovery.agents.users import UserIntelligenceAgent
 from discovery.engine import detect_candidates, run_engine
-from discovery.engine.graph import build_opportunity_graph
+from discovery.agents.experiment import design
+from discovery.agents.loop import DevelopmentLoopAgent
+from discovery.agents.memory import ProductMemoryAgent
+from discovery.engine.graph import build_opportunity_graph, trace
+from discovery.engine.intelligence import compose
 from discovery.models import (
     CompetitorBrief,
     CompetitorIntelligence,
@@ -40,6 +44,7 @@ class DiscoveryAgent:
             store.save_themes(connection, themes)
             store.replace_signals(connection, signals)
             store.save_catalog(connection, catalog)
+            store.save_outcomes(connection, intel.load_memory(directory / "memory.json"))
         return len(signals)
 
     def ingest(self, path: Path) -> int:
@@ -58,6 +63,7 @@ class DiscoveryAgent:
             themes = store.load_themes(connection)
             catalog = store.load_catalog(connection)
             context = store.load_context(connection)
+            learnings = store.load_experiment_learnings(connection)
 
         collected = intel.collect(intel.sources_for(signals))
         market_signals = MarketResearchAgent().analyze(collected, themes)
@@ -75,6 +81,7 @@ class DiscoveryAgent:
             market_signals,
             user_intelligence,
             competitor_intelligence,
+            learnings,
         )
         pillar_counts = {
             "market": sum(1 for signal in collected if signal.pillar.value == "market"),
@@ -142,6 +149,118 @@ class DiscoveryAgent:
     def opportunity(self, opportunity_id: str) -> Opportunity | None:
         with store.open_db(self.home) as connection:
             return store.get_opportunity(connection, opportunity_id)
+
+    def development_loop(self, opportunity_id: str):
+        opportunity = self.opportunity(opportunity_id)
+        if opportunity is None:
+            return None
+        why = ""
+        stored = self.opportunity_graph()
+        if stored is not None:
+            traced = trace(stored, opportunity_id)
+            if traced is not None:
+                why = traced.why
+        return DevelopmentLoopAgent().write(opportunity, why)
+
+    def intelligence(self, opportunity_id: str):
+        opportunity = self.opportunity(opportunity_id)
+        if opportunity is None:
+            return None
+        signals = self.signals()
+        report = self.user_intelligence()
+        cluster = None
+        if report is not None:
+            cluster = next((item for item in report.clusters if item.theme == opportunity.theme), None)
+        traced = None
+        stored = self.opportunity_graph()
+        if stored is not None:
+            traced = trace(stored, opportunity_id)
+        return compose(signals, opportunity, cluster, traced)
+
+    def portfolio(self):
+        from discovery.agents.portfolio import build_portfolio
+
+        with store.open_db(self.home) as connection:
+            approvals = store.load_execution_approvals(connection)
+        return build_portfolio(
+            self.opportunities(),
+            self.memory().records,
+            self.experiment_learnings(),
+            approvals,
+        )
+
+    def experiment(self, opportunity_id: str):
+        opportunity = self.opportunity(opportunity_id)
+        if opportunity is None:
+            return None
+        plan = design(opportunity, self.memory().records, self.experiment_learnings())
+        note = self.execution_note(opportunity_id)
+        readings = self.experiment_readings(opportunity_id)
+        from discovery.agents.execute import run_execution
+
+        hypothesis = plan.specifications[0].hypothesis if plan.specifications else ""
+        if "spending" in opportunity.problem.lower() or "money" in opportunity.problem.lower():
+            hypothesis = "Users want AI spending explanations."
+        plan.execution = run_execution(
+            plan.specifications,
+            approved=note is not None,
+            note=note or "",
+            readings=readings,
+            hypothesis=hypothesis,
+        )
+        from discovery.agents.learning import chain_for
+
+        plan.memory_chain = chain_for(plan)
+        if plan.memory_chain.result != "No result is recorded.":
+            self.remember_learning(plan.memory_chain)
+        return plan
+
+    def execution_note(self, opportunity_id: str) -> str | None:
+        with store.open_db(self.home) as connection:
+            return store.load_execution_approvals(connection).get(opportunity_id)
+
+    def experiment_learnings(self):
+        with store.open_db(self.home) as connection:
+            return store.load_experiment_learnings(connection)
+
+    def remember_learning(self, record) -> None:
+        with store.open_db(self.home) as connection:
+            store.remember_experiment_learning(connection, record)
+
+    def experiment_readings(self, opportunity_id: str):
+        with store.open_db(self.home) as connection:
+            return store.load_experiment_readings(connection, opportunity_id)
+
+    def approve_execution(self, opportunity_id: str, note: str) -> bool:
+        if self.opportunity(opportunity_id) is None:
+            return False
+        with store.open_db(self.home) as connection:
+            store.save_execution_approval(connection, opportunity_id, note.strip())
+        return True
+
+    def memory(self):
+        with store.open_db(self.home) as connection:
+            context = store.load_context(connection)
+            signals = store.list_signals(connection)
+            opportunities = store.list_opportunities(connection)
+            reviews = store.list_all_reviews(connection)
+            catalog = store.load_catalog(connection)
+            themes = store.load_themes(connection)
+            outcomes = store.load_outcomes(connection)
+        return ProductMemoryAgent().remember(
+            context,
+            signals,
+            opportunities,
+            reviews,
+            catalog,
+            themes,
+            outcomes,
+        )
+
+    def ask(self, question: str):
+        from datetime import date
+
+        return ProductMemoryAgent().ask(self.memory(), question, date.today())
 
     def reviews(self, opportunity_id: str):
         with store.open_db(self.home) as connection:

@@ -84,7 +84,7 @@ def create_app() -> FastAPI:
         from urllib.parse import urlparse
 
         path = urlparse(request.headers.get("referer", "")).path
-        if path in {"/market", "/users", "/competitors", "/detect", "/validate", "/graph"}:
+        if path in {"/market", "/users", "/competitors", "/detect", "/validate", "/graph", "/loop", "/memory", "/engine", "/experiment"}:
             return RedirectResponse(path, status_code=303)
         return RedirectResponse("/", status_code=303)
 
@@ -170,6 +170,13 @@ def create_app() -> FastAPI:
         opportunities = agent.opportunities()
         selected = opportunity or _default_opportunity(opportunities)
         stored = agent.opportunity_graph()
+        if stored is not None and selected:
+            opportunity = agent.opportunity(selected)
+            plan = agent.experiment(selected)
+            if opportunity is not None and plan is not None:
+                from discovery.agents.learning import attach_learning
+
+                stored = attach_learning(stored, opportunity, plan)
         traced = trace(stored, selected) if stored is not None and selected else None
         return _render(
             request,
@@ -186,6 +193,128 @@ def create_app() -> FastAPI:
                 "users": False,
                 "competitors": False,
                 "detect": False,
+                "queue": False,
+            },
+        )
+
+    @app.get("/loop", response_class=HTMLResponse)
+    def loop_page(request: Request, opportunity: str | None = None) -> HTMLResponse:
+        agent = DiscoveryAgent()
+        opportunities = agent.opportunities()
+        selected = opportunity or _loop_opportunity(opportunities)
+        report = agent.development_loop(selected) if selected else None
+        return _render(
+            request,
+            "loop.html",
+            {
+                "context": agent.context(),
+                "opportunities": opportunities,
+                "selected": selected,
+                "report": report,
+                "signal_count": len(agent.signals()),
+                "labels": LABELS,
+                "loop": True,
+                "graph": False,
+                "market": False,
+                "users": False,
+                "competitors": False,
+                "detect": False,
+                "validate": False,
+                "queue": False,
+            },
+        )
+
+    @app.get("/memory", response_class=HTMLResponse)
+    def memory_page(request: Request, q: str | None = None) -> HTMLResponse:
+        from discovery.agents.memory import QUESTIONS
+        from discovery.models import MemoryKind
+        from discovery.present import MEMORY_LABELS
+
+        agent = DiscoveryAgent()
+        memory = agent.memory()
+        questions = list(QUESTIONS)
+        if q and q not in questions:
+            questions = [q, *questions]
+        answers = [agent.ask(question) for question in questions]
+        groups = [(kind.value, MEMORY_LABELS[kind.value], memory.of_kind(kind)) for kind in MemoryKind]
+        return _render(
+            request,
+            "memory.html",
+            {
+                "context": agent.context(),
+                "memory": memory,
+                "groups": groups,
+                "answers": answers,
+                "asked": q or "",
+                "signal_count": len(agent.signals()),
+                "labels": LABELS,
+                "memory_page": True,
+                "loop": False,
+                "graph": False,
+                "market": False,
+                "users": False,
+                "competitors": False,
+                "detect": False,
+                "validate": False,
+                "queue": False,
+            },
+        )
+
+    @app.get("/engine", response_class=HTMLResponse)
+    def engine_page(request: Request, opportunity: str | None = None) -> HTMLResponse:
+        agent = DiscoveryAgent()
+        opportunities = agent.opportunities()
+        selected = opportunity or _loop_opportunity(opportunities)
+        report = agent.intelligence(selected) if selected else None
+        return _render(
+            request,
+            "engine.html",
+            {
+                "context": agent.context(),
+                "opportunities": opportunities,
+                "selected": selected,
+                "report": report,
+                "signal_count": len(agent.signals()),
+                "labels": LABELS,
+                "engine": True,
+                "loop": False,
+                "graph": False,
+                "market": False,
+                "users": False,
+                "competitors": False,
+                "detect": False,
+                "validate": False,
+                "queue": False,
+            },
+        )
+
+    @app.get("/experiment", response_class=HTMLResponse)
+    def experiment_page(request: Request, opportunity: str | None = None) -> HTMLResponse:
+        agent = DiscoveryAgent()
+        opportunities = agent.opportunities()
+        selected = opportunity or _loop_opportunity(opportunities)
+        plan = agent.experiment(selected) if selected else None
+        portfolio = agent.portfolio()
+        return _render(
+            request,
+            "experiment.html",
+            {
+                "context": agent.context(),
+                "opportunities": opportunities,
+                "selected": selected,
+                "plan": plan,
+                "portfolio": portfolio,
+                "signal_count": len(agent.signals()),
+                "labels": LABELS,
+                "experiment": True,
+                "engine": False,
+                "loop": False,
+                "graph": False,
+                "market": False,
+                "users": False,
+                "competitors": False,
+                "detect": False,
+                "validate": False,
                 "queue": False,
             },
         )
@@ -217,6 +346,16 @@ def create_app() -> FastAPI:
     def demo() -> RedirectResponse:
         DiscoveryAgent().demo()
         return RedirectResponse("/", status_code=303)
+
+    @app.post("/experiment/approve")
+    def approve_experiment(
+        opportunity_id: str = Form(...),
+        note: str = Form(""),
+    ) -> RedirectResponse:
+        updated = DiscoveryAgent().approve_execution(opportunity_id, note)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Opportunity not found")
+        return RedirectResponse(f"/experiment?opportunity={opportunity_id}", status_code=303)
 
     @app.post("/opportunities/{opportunity_id}/review")
     def review(
@@ -279,6 +418,13 @@ def _board(
             "pursue_count": verdict_counts["pursue"],
         },
     )
+
+
+def _loop_opportunity(opportunities: list[Opportunity]) -> str:
+    approved = next((item for item in opportunities if item.status.value == "approved"), None)
+    if approved is not None:
+        return approved.id
+    return _default_opportunity(opportunities)
 
 
 def _default_opportunity(opportunities: list[Opportunity]) -> str:

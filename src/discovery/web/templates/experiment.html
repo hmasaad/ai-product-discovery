@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}Experiment · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">AI experimentation agent</p>
+    <h1>The cheapest experiment</h1>
+    <p class="mission">Discovery asks what might be worth pursuing. This agent writes five testable hypotheses, then picks the least expensive experiment that can reduce the unknown. A full build is not that experiment. A result has to be recorded against this opportunity before the product manager takes it.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+  </div>
+</section>
+
+{% if portfolio.rows %}
+<section class="card">
+  <p class="eyebrow">Experiment portfolio</p>
+  <h2>Every experiment in flight</h2>
+  <div class="table-wrap">
+    <table class="summary portfolio">
+      <thead>
+        <tr>
+          <th>Experiment</th>
+          <th>Status</th>
+          <th>Risk</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in portfolio.rows %}
+        <tr>
+          <td>{% if row.opportunity_id %}<a href="/experiment?opportunity={{ row.opportunity_id }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</td>
+          <td>{{ row.status }}</td>
+          <td>{{ row.risk }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% for note in portfolio.notes %}
+  <h3>{{ note.topic }}</h3>
+  <p>{{ note.summary }}</p>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if plan %}
+<nav class="filters" aria-label="Opportunities">
+  {% for opp in opportunities %}
+  <a href="/experiment?opportunity={{ opp.id }}" {% if opp.id == selected %}aria-current="page"{% endif %}>{{ opp.title }}</a>
+  {% endfor %}
+</nav>
+
+<section class="card">
+  <h2>{{ plan.title }}</h2>
+  <p class="mapping"><a href="/opportunities/{{ plan.opportunity_id }}">Open the product opportunity brief</a></p>
+</section>
+
+<ol class="loop-list">
+  {% for stage in plan.stages %}
+  <li class="loop-stage loop-{{ stage.status }}">
+    <p class="loop-title"><span class="pill status-{{ stage.status }}">{{ stage.status }}</span> {{ loop.index }}. {{ stage.title }}</p>
+    <p>{{ stage.summary }}</p>
+    {% if stage.title == "Hypothesis Generator" and plan.hypotheses %}
+    <div class="hypotheses">
+      {% for item in plan.hypotheses %}
+      <article class="hypothesis">
+        <h3>{{ item.code }}. {{ item.statement }}</h3>
+        <dl>
+          <dt>Target segment</dt><dd>{{ item.target_segment }}</dd>
+          <dt>Expected behavior</dt><dd>{{ item.expected_behavior }}</dd>
+          <dt>Metric</dt><dd>{{ item.metric }}</dd>
+          <dt>Threshold</dt><dd>{{ item.threshold }}</dd>
+          <dt>Time period</dt><dd>{{ item.time_period }}</dd>
+          <dt>Confidence</dt><dd>{{ item.confidence }}</dd>
+          <dt>Evidence</dt><dd>{{ item.evidence }}</dd>
+        </dl>
+      </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if stage.title == "Experiment Specification" and plan.specifications %}
+    <div class="hypotheses">
+      {% for spec in plan.specifications %}
+      <article class="hypothesis">
+        <h3>{{ spec.name }}</h3>
+        <dl>
+          <dt>Objective</dt><dd>{{ spec.objective }}</dd>
+          <dt>Hypothesis</dt><dd>{{ spec.hypothesis }}</dd>
+          <dt>Target audience</dt><dd>{{ spec.target_audience }}</dd>
+          <dt>Variant</dt><dd>{{ spec.variant }}</dd>
+          <dt>Control</dt><dd>{{ spec.control }}</dd>
+          <dt>Success metrics</dt><dd>Primary: {{ spec.primary_metric }} Secondary: {{ spec.secondary_metric }}</dd>
+          <dt>Guardrail metrics</dt><dd>{{ spec.guardrails | join(", ") }}</dd>
+          <dt>Sample size</dt><dd>{{ spec.sample_size }}</dd>
+          <dt>Duration</dt><dd>{{ spec.duration }}</dd>
+          <dt>Decision threshold</dt><dd>{{ spec.decision_threshold }}</dd>
+          <dt>Risks</dt><dd>{{ spec.risks | join(" ") }}</dd>
+          <dt>Expected learning</dt><dd>{{ spec.expected_learning }}</dd>
+          <dt>Possible outcomes</dt><dd>{{ spec.outcomes | join(" → ") }}</dd>
+        </dl>
+      </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if stage.title == "Experiment Designer" %}
+    <p>Unknown: {{ plan.unknown }}</p>
+    <div class="table-wrap">
+      <table class="summary choice-table">
+        <thead>
+          <tr><th></th><th>Experiment</th><th>Cost</th><th>Information</th></tr>
+        </thead>
+        <tbody>
+          {% for choice in plan.choices %}
+          <tr {% if choice.selected %}class="choice-selected"{% endif %}>
+            <td>{{ choice.code }}</td>
+            <td>{{ choice.name }}</td>
+            <td>{{ choice.cost }}</td>
+            <td>{{ choice.information }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <ul class="plain">
+      {% for row in plan.catalog %}<li>{{ row }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if stage.lines %}
+    <ul class="plain">
+      {% for line in stage.lines %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+
+{% if plan.execution %}
+<section class="card">
+  <p class="eyebrow">Experiment execution agent</p>
+  <h2>Nine steps, with a gate before production</h2>
+  <p>The agent can reach analytics, feature flags, the product database, the survey system, the A/B testing platform, user feedback, and the experiment dashboard. A feature flag, a start, and a stop change production, so they wait for a person.</p>
+  <ol class="loop-list">
+    {% for step in plan.execution.steps %}
+    <li class="loop-stage loop-{{ step.status }}">
+      <p class="loop-title"><span class="pill status-{{ step.status }}">{{ step.status }}</span> {{ loop.index }}. {{ step.action }}</p>
+      <p class="mapping">{{ step.system }}{% if step.needs_approval %} · approval required{% endif %}</p>
+      <p>{{ step.summary }}</p>
+    </li>
+    {% endfor %}
+  </ol>
+  {% if plan.execution.approved %}
+  <p>Approved{% if plan.execution.approval_note %}: {{ plan.execution.approval_note }}{% endif %}</p>
+  {% else %}
+  <form method="post" action="/experiment/approve" class="ask-form">
+    <input type="hidden" name="opportunity_id" value="{{ plan.opportunity_id }}">
+    <label for="execution-note">Approval note</label>
+    <input id="execution-note" name="note" type="text" placeholder="Why this may change production">
+    <button type="submit" class="button button-primary">Approve production changes</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="card">
+  <p class="eyebrow">Experiment monitor</p>
+  <h2>Experiment status: {{ plan.execution.monitor.status }}</h2>
+  <p>{{ plan.execution.monitor.explanation }}</p>
+  <div class="monitor-lanes">
+    {% for lane in plan.execution.monitor.lanes %}
+    <article class="hypothesis">
+      <h3>{{ lane.name }}</h3>
+      <ul class="plain">
+        {% for line in lane.lines %}<li>{{ line }}</li>{% endfor %}
+      </ul>
+    </article>
+    {% endfor %}
+  </div>
+  <p>{{ plan.execution.report }}</p>
+</section>
+
+{% if plan.execution.analysis %}
+<section class="card">
+  <p class="eyebrow">Results analysis agent</p>
+  <h2>Results</h2>
+  <div class="hypothesis">
+    <dl>
+      <dt>Hypothesis</dt><dd>{{ plan.execution.analysis.hypothesis }}</dd>
+      <dt>Observed</dt><dd>{{ plan.execution.analysis.observed }}</dd>
+    </dl>
+  </div>
+  <h3>Evidence</h3>
+  <ul class="plain">
+    {% for line in plan.execution.analysis.supporting %}
+    <li class="pass">{{ line }}</li>
+    {% else %}
+    <li>No supporting evidence is recorded.</li>
+    {% endfor %}
+  </ul>
+  <h3>Contradicting evidence</h3>
+  <ul class="plain">
+    {% for line in plan.execution.analysis.contradicting %}
+    <li class="warn">{{ line }}</li>
+    {% else %}
+    <li>No contradicting evidence is recorded.</li>
+    {% endfor %}
+  </ul>
+  <h3>Interpretation</h3>
+  <p>{{ plan.execution.analysis.interpretation }}</p>
+  <h3>Remaining uncertainty</h3>
+  <p>{{ plan.execution.analysis.uncertainty }}</p>
+  <h3>Next experiment</h3>
+  <p>{{ plan.execution.analysis.next_experiment }}</p>
+</section>
+{% endif %}
+{% endif %}
+
+{% if plan.memory_chain %}
+<section class="card">
+  <p class="eyebrow">Experiment learning memory</p>
+  <h2>What the next experiment can use</h2>
+  <ol class="memory-chain">
+    <li><span>Opportunity</span><strong>{{ plan.memory_chain.opportunity }}</strong></li>
+    <li><span>Hypothesis</span><strong>{{ plan.memory_chain.hypothesis }}</strong></li>
+    <li><span>Experiment</span><strong>{{ plan.memory_chain.experiment }}</strong></li>
+    <li><span>Result</span><strong>{{ plan.memory_chain.result }}</strong></li>
+    <li><span>Learning</span><strong>{{ plan.memory_chain.learning }}</strong></li>
+    <li><span>Decision</span><strong>{{ plan.memory_chain.decision }}</strong></li>
+  </ol>
+  {% if plan.prior_learning and plan.informed_experiment %}
+  <h3>Past experiment</h3>
+  <p>{{ plan.prior_learning.experiment }}</p>
+  <h3>Past learning</h3>
+  <p>{{ plan.prior_learning.learning }}</p>
+  <h3>New experiment</h3>
+  <p>{{ plan.informed_experiment }}</p>
+  {% else %}
+  <p>No earlier experiment is stored for this opportunity. A recorded learning is what the next design reads.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card">
+  <p class="eyebrow">Evidence</p>
+  <h2>{{ plan.decision }}</h2>
+  <p>{{ plan.decision_summary }}</p>
+  <p class="loop-title">AI Product Manager</p>
+  <p>{{ plan.pm_summary }}</p>
+</section>
+{% else %}
+<section class="empty">
+  <h2>No experiment yet</h2>
+  <p>Load the sample workspace. The agent then designs one experiment for an opportunity and waits for a recorded result.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -265,6 +265,111 @@ Prototype → 20 users → measure engagement
 
 `discovery brief opp-instrumentation` prints that brief for a stored opportunity. The same document leads each memo.
 
+## Product loop
+
+An approved brief is the intake for the product manager. The later stages stay inside that brief. Production is the experiment, and the measurement re-enters discovery.
+
+```
+AI Product Discovery Agent
+             ↓
+      Opportunity Graph
+             ↓
+      AI Product Manager
+             ↓
+           PRD
+             ↓
+      AI Software Architect
+             ↓
+       AI Developer Agent
+             ↓
+          AI QA Agent
+             ↓
+       AI Review Agent
+             ↓
+       Production
+             ↓
+      Product Analytics
+             │
+             └───────────────┐
+                             ↓
+                    Product Discovery
+```
+
+A parked opportunity stays in discovery. A brief that is not approved stops before the PRD. Contradicting evidence holds the review, so the experiment does not start.
+
+Open the Loop tab, or run `discovery loop opp-instrumentation`.
+
+## Product intelligence memory
+
+The agent keeps a record of the product, its features, users, problems, competitors, experiments, decisions, metrics, feedback, rejected ideas, successful ideas, and failed experiments. Questions are answered from that record.
+
+```
+Have we seen this problem before?
+Why did we reject this feature six months ago?
+Which customer problems are repeatedly appearing?
+Which opportunities have strong evidence but haven't been tested?
+```
+
+A problem counts as seen before when two or more feedback items land on it. A rejection from six months ago is a rejected idea dated about half a year before the question. A pursue opportunity with no recorded experiment result is still untested.
+
+Open the Memory tab, or run `discovery memory` and `discovery ask "Have we seen this problem before?"`.
+
+## Opportunity intelligence engine
+
+One path runs the six capabilities:
+
+1. Signal ingestion
+2. Problem clustering
+3. Opportunity detection
+4. Evidence graph
+5. Opportunity validation
+6. Opportunity → PRD handoff
+
+The handoff writes a PRD only after the opportunity is approved. A parked opportunity stays in discovery.
+
+Open the Engine tab, or run `discovery engine opp-instrumentation`.
+
+## AI experimentation agent
+
+The discovery agent asks what might be worth pursuing. The experimentation agent writes five testable hypotheses, then picks the least expensive experiment that can reduce the unknown. A full build is not that experiment.
+
+1. Hypothesis Generator
+2. Experiment Designer
+3. Experiment Specification
+4. Success Metric Designer
+5. Experiment Executor
+6. Results Analyzer
+7. Learning Engine
+
+Each hypothesis names a target segment, the expected behavior, a metric, a threshold, a time period, a confidence, and the evidence behind it. Confidence is High with two or more supporting signals, Medium with one, and Low when none are recorded.
+
+For an open question about use, the designer compares four options:
+
+| | Experiment | Cost | Information |
+| --- | --- | --- | --- |
+| A | Build full feature | Very High | High |
+| B | Build prototype | Medium | High |
+| C | Fake-door test | Low | Medium |
+| D | Interview users | Very Low | Medium |
+
+It selects C plus targeted interviews. A parked opportunity, or one that says not to schedule a build, selects interviews only.
+
+Each selected experiment is then a specification: objective, hypothesis, audience, variant, control, success metrics, guardrail metrics, sample size, duration, decision threshold, risks, expected learning, and the outcomes continue, iterate, or reject. The fake-door threshold is a click-through rate of at least 8%. That bar is not an observed result.
+
+A recorded success validates the opportunity and the product manager can take the brief. A recorded failure, a parked opportunity, or contradicting evidence that is still open is reject or iterate. With no result recorded, the product manager waits. A result counts only when memory stored it against that opportunity.
+
+The execution agent then takes nine steps: create the experiment, configure the audience, configure the feature flag, start, monitor metrics, detect anomalies, stop when necessary, analyze results, and write the report. It reaches analytics, feature flags, the product database, the survey system, the A/B testing platform, user feedback, and the experiment dashboard. A flag, a start, and a stop change production, so they wait for approval. Approval records the instruction. No flag service is connected, so the variant does not start serving traffic.
+
+The monitor watches the primary metric, the guardrails, and the quality signals while the experiment is running. The control is the behavioral baseline. A move of more than 2% is an anomaly. A guardrail that leaves the baseline while the variant is up is a warning. A guardrail 25% or more off the baseline, or a primary drop of 10%, is critical and the agent recommends a stop that still needs approval.
+
+The results analysis writes a learning. It names the hypothesis, what was observed, the supporting evidence, and the contradicting evidence. When demand shows up and then fades, the interpretation is that initial demand exists and sustained value is not yet established. The next experiment tests retention. The analysis does not declare a winner.
+
+Each experiment is also stored as a chain: opportunity, hypothesis, experiment, result, learning, decision. The next design reads that chain. When an earlier experiment found that clicks were high and follow-through was low, the next experiment tests actionable recommendations instead of informational recommendations.
+
+The same agent keeps an experiment portfolio. Each row is an experiment with a status and a risk. Status is planned until a start is approved, running once it is, and complete once a result is stored. Risk follows the cost of the selected experiment. From the set, the agent calls out experiment conflicts, user overlap, resource consumption, statistical contamination, priority, and expected information gain.
+
+Open the Experiment tab, or run `discovery experiment opp-instrumentation`.
+
 ## Opportunity graph
 
 Opportunities are not only a list. Each one sits on a path the agent can walk backward:
@@ -275,6 +380,14 @@ Market → Trend → Users → Problems → Opportunity → Feature → MVP
 ```
 
 `discovery graph opp-instrumentation` answers why that opportunity exists and lists the signals on the path. The same trace is on the Graph tab and on each memo.
+
+The path continues after the opportunity:
+
+```
+Hypothesis → Experiment → Observation → Learning → Decision → Product change → New observation → New hypothesis
+```
+
+A new observation starts the next hypothesis, so the graph stays a learning system.
 
 ## How a judgment is made
 

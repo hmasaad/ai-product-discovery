@@ -1,0 +1,29 @@
+[
+  {
+    "id": "mem-pdf",
+    "kind": "rejected_ideas",
+    "title": "Export to PDF",
+    "detail": "Finance team already had a spreadsheet.",
+    "observed_at": "2026-03-29",
+    "source": "Decision record",
+    "subject": "export-pdf"
+  },
+  {
+    "id": "mem-invite",
+    "kind": "successful_ideas",
+    "title": "Workspace invite email",
+    "detail": "Invite acceptance rose after the copy test.",
+    "observed_at": "2026-01-15",
+    "source": "Decision record",
+    "subject": "invite-email"
+  },
+  {
+    "id": "mem-replay-pilot",
+    "kind": "failed_experiments",
+    "title": "Session replay pilot",
+    "detail": "Five teams opened replay and did not change a roadmap decision.",
+    "observed_at": "2026-06-02",
+    "source": "Experiment record",
+    "subject": "replay-pilot"
+  }
+]

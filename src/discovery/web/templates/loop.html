@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Product loop · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Closed loop</p>
+    <h1>From discovery back to discovery</h1>
+    <p class="mission">An approved brief goes to the product manager, then through a PRD, architecture, development, QA, and review. Production is the experiment. The measurement comes back as the next discovery input.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+  </div>
+</section>
+
+{% if report %}
+<nav class="filters" aria-label="Opportunities">
+  {% for opp in opportunities %}
+  <a href="/loop?opportunity={{ opp.id }}" {% if opp.id == selected %}aria-current="page"{% endif %}>{{ opp.title }}</a>
+  {% endfor %}
+</nav>
+
+<section class="card">
+  <h2>{{ report.title }}</h2>
+  <p class="mapping"><a href="/opportunities/{{ report.opportunity_id }}">Open the product opportunity brief</a></p>
+</section>
+
+<ol class="loop-list">
+  {% for stage in report.stages %}
+  <li class="loop-stage loop-{{ stage.status.value }}">
+    <p class="loop-title"><span class="pill status-{{ stage.status.value }}">{{ stage.status.value }}</span> {{ stage.title }}</p>
+    <p>{{ stage.summary }}</p>
+    {% if stage.lines %}
+    <ul class="plain">
+      {% for line in stage.lines %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<section class="empty">
+  <h2>No loop yet</h2>
+  <p>Load the sample workspace. An approved opportunity can then leave discovery and come back as a measurement.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

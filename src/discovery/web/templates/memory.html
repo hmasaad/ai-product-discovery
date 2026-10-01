@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Product memory · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Product intelligence memory</p>
+    <h1>What the agent remembers</h1>
+    <p class="mission">Answers come from recorded products, problems, decisions, and experiments. A question the memory does not recognize stays unanswered.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="get" action="/memory" class="ask-form">
+      <label>
+        <span>Ask the memory</span>
+        <input type="text" name="q" value="{{ asked }}" placeholder="Have we seen this problem before?">
+      </label>
+      <button type="submit" class="button button-primary">Ask</button>
+    </form>
+  </div>
+</section>
+
+{% if memory.records %}
+<section class="memory-answers">
+  {% for answer in answers %}
+  <article class="card">
+    <h2>{{ answer.question }}</h2>
+    <p>{{ answer.answer }}</p>
+  </article>
+  {% endfor %}
+</section>
+
+<section class="memory-counts" aria-label="Memory categories">
+  {% for key, label, records in groups %}
+  <a href="#memory-{{ key }}">{{ label }} <strong>{{ records|length }}</strong></a>
+  {% endfor %}
+</section>
+
+{% for key, label, records in groups %}
+<section class="card" id="memory-{{ key }}">
+  <h2>{{ label }}</h2>
+  {% if records %}
+  <ul class="plain">
+    {% for record in records %}
+    <li>
+      <strong>{{ record.title }}</strong>
+      {% if record.detail %}<span>{{ record.detail }}</span>{% endif %}
+      {% if record.observed_at %}<span class="when">{{ record.observed_at | pretty_date }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty-pillar">None recorded.</p>
+  {% endif %}
+</section>
+{% endfor %}
+{% else %}
+<section class="empty">
+  <h2>No memory yet</h2>
+  <p>Load the sample workspace. The next cycle remembers the product, its problems, and the decisions already on record.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

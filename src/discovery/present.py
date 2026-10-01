@@ -21,6 +21,14 @@ NODE_LABELS = {
     "product": "Product",
     "mvp": "MVP",
     "business_case": "Business case",
+    "hypothesis": "Hypothesis",
+    "experiment": "Experiment",
+    "observation": "Observation",
+    "learning": "Learning",
+    "decision": "Decision",
+    "product_change": "Product change",
+    "new_observation": "New observation",
+    "new_hypothesis": "New hypothesis",
 }
 
 VERDICT_LABELS = {
@@ -108,3 +116,19 @@ def format_timestamp(value: str) -> str:
 
 def percent(value: float) -> int:
     return round(float(value) * 100)
+
+
+MEMORY_LABELS = {
+    "products": "Products",
+    "features": "Features",
+    "users": "Users",
+    "problems": "Problems",
+    "competitors": "Competitors",
+    "experiments": "Experiments",
+    "decisions": "Decisions",
+    "metrics": "Metrics",
+    "feedback": "Feedback",
+    "rejected_ideas": "Rejected ideas",
+    "successful_ideas": "Successful ideas",
+    "failed_experiments": "Failed experiments",
+}

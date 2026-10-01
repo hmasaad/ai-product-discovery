@@ -13,6 +13,7 @@ from discovery.brief import render_product_brief
 from discovery.models import CycleReport
 from discovery.paths import inbox_dir
 from discovery.engine.graph import trace
+from discovery.agents.memory import QUESTIONS
 from discovery.present import NODE_LABELS, VERDICT_LABELS, percent
 
 
@@ -43,6 +44,15 @@ def main(argv: list[str] | None = None) -> int:
     validate.add_argument("opportunity_id", nargs="?")
     graph = commands.add_parser("graph", help="Explain why an opportunity exists")
     graph.add_argument("opportunity_id", nargs="?")
+    loop = commands.add_parser("loop", help="Follow an opportunity through the product loop")
+    loop.add_argument("opportunity_id", nargs="?")
+    engine = commands.add_parser("engine", help="Run the opportunity intelligence engine")
+    engine.add_argument("opportunity_id", nargs="?")
+    experiment = commands.add_parser("experiment", help="Design the cheapest experiment for an opportunity")
+    experiment.add_argument("opportunity_id", nargs="?")
+    commands.add_parser("memory", help="Show what the product memory remembers")
+    ask = commands.add_parser("ask", help="Ask the product memory a question")
+    ask.add_argument("question")
 
     brief = commands.add_parser("brief", help="Print the product opportunity brief")
     brief.add_argument("opportunity_id")
@@ -101,6 +111,23 @@ def _dispatch(agent: DiscoveryAgent, args: argparse.Namespace) -> int:
         return 0
     if args.command == "graph":
         _print_graph(agent, args.opportunity_id)
+        return 0
+    if args.command == "loop":
+        _print_loop(agent, args.opportunity_id)
+        return 0
+    if args.command == "engine":
+        _print_engine(agent, args.opportunity_id)
+        return 0
+    if args.command == "experiment":
+        _print_experiment(agent, args.opportunity_id)
+        return 0
+    if args.command == "memory":
+        _print_memory(agent)
+        return 0
+    if args.command == "ask":
+        answer = agent.ask(args.question)
+        print(answer.question)
+        print(answer.answer)
         return 0
     if args.command == "brief":
         opportunity = agent.opportunity(args.opportunity_id)
@@ -259,6 +286,187 @@ def _print_validation(agent: DiscoveryAgent, opportunity_id: str | None) -> None
             print(f"{item.question} {item.answer}")
 
 
+def _print_engine(agent: DiscoveryAgent, opportunity_id: str | None) -> None:
+    opportunities = agent.opportunities()
+    if opportunity_id:
+        opportunities = [item for item in opportunities if item.id == opportunity_id]
+        if not opportunities:
+            raise ValueError(f"No opportunity named {opportunity_id}")
+    elif opportunities:
+        approved = next((item for item in opportunities if item.status.value == "approved"), None)
+        pursue = next((item for item in opportunities if item.verdict.value == "pursue"), None)
+        opportunities = [approved or pursue or opportunities[0]]
+    if not opportunities:
+        print("No opportunity intelligence yet. Run `discovery demo` or `discovery run`.")
+        return
+    report = agent.intelligence(opportunities[0].id)
+    if report is None:
+        return
+    print(report.title)
+    for index, stage in enumerate(report.stages, start=1):
+        print(f"\n{index}. {stage.capability}")
+        print(stage.summary)
+        for line in stage.lines:
+            print(f"  {line}")
+
+
+def _print_experiment(agent: DiscoveryAgent, opportunity_id: str | None) -> None:
+    opportunities = agent.opportunities()
+    if opportunity_id:
+        opportunities = [item for item in opportunities if item.id == opportunity_id]
+        if not opportunities:
+            raise ValueError(f"No opportunity named {opportunity_id}")
+    elif opportunities:
+        approved = next((item for item in opportunities if item.status.value == "approved"), None)
+        pursue = next((item for item in opportunities if item.verdict.value == "pursue"), None)
+        opportunities = [approved or pursue or opportunities[0]]
+    if not opportunities:
+        print("No experiment yet. Run `discovery demo` or `discovery run`.")
+        return
+    portfolio = agent.portfolio()
+    if portfolio.rows:
+        print("Experiment portfolio")
+        for row in portfolio.rows:
+            print(f"  {row.name} — {row.status} — {row.risk}")
+        for note in portfolio.notes:
+            print(f"\n{note.topic}")
+            print(note.summary)
+        print()
+    plan = agent.experiment(opportunities[0].id)
+    if plan is None:
+        return
+    print(plan.title)
+    for index, stage in enumerate(plan.stages, start=1):
+        print(f"\n{index}. {stage.title}")
+        print(stage.summary)
+        if stage.title == "Hypothesis Generator":
+            for item in plan.hypotheses:
+                print(f"  {item.code}: {item.statement}")
+                print(f"  Target segment: {item.target_segment}")
+                print(f"  Expected behavior: {item.expected_behavior}")
+                print(f"  Metric: {item.metric}")
+                print(f"  Threshold: {item.threshold}")
+                print(f"  Time period: {item.time_period}")
+                print(f"  Confidence: {item.confidence}")
+                print(f"  Evidence: {item.evidence}")
+        if stage.title == "Experiment Specification":
+            for spec in plan.specifications:
+                print(f"  Experiment: {spec.name}")
+                print(f"  Objective: {spec.objective}")
+                print(f"  Hypothesis: {spec.hypothesis}")
+                print(f"  Target audience: {spec.target_audience}")
+                print(f"  Variant: {spec.variant}")
+                print(f"  Control: {spec.control}")
+                print(f"  Primary metric: {spec.primary_metric}")
+                print(f"  Secondary metric: {spec.secondary_metric}")
+                print(f"  Guardrails: {', '.join(spec.guardrails)}")
+                print(f"  Sample size: {spec.sample_size}")
+                print(f"  Duration: {spec.duration}")
+                print(f"  Decision threshold: {spec.decision_threshold}")
+                print(f"  Risks: {'; '.join(spec.risks)}")
+                print(f"  Expected learning: {spec.expected_learning}")
+                print(f"  Possible outcomes: {' → '.join(spec.outcomes)}")
+        if stage.title == "Experiment Designer":
+            print(f"  Unknown: {plan.unknown}")
+            for choice in plan.choices:
+                mark = "selected" if choice.selected else "not selected"
+                print(f"  {choice.code}. {choice.name}. Cost: {choice.cost}. Information: {choice.information}. {mark}.")
+            for row in plan.catalog:
+                print(f"  {row}")
+        for line in stage.lines:
+            print(f"  {line}")
+    if plan.execution is not None:
+        print("\nExperiment execution")
+        for index, step in enumerate(plan.execution.steps, start=1):
+            gate = " approval" if step.needs_approval else ""
+            print(f"{index}. {step.action} — {step.system} ({step.status}{gate})")
+            print(f"  {step.summary}")
+        print(f"\nMonitor: {plan.execution.monitor.status}")
+        print(plan.execution.monitor.explanation)
+        print(plan.execution.report)
+        if plan.execution.analysis is not None:
+            item = plan.execution.analysis
+            print("\nResults")
+            print(f"Hypothesis: {item.hypothesis}")
+            print(f"Observed: {item.observed}")
+            print("Evidence:")
+            for line in item.supporting or ["No supporting evidence is recorded."]:
+                print(f"  {line}")
+            print("Contradicting evidence:")
+            for line in item.contradicting or ["No contradicting evidence is recorded."]:
+                print(f"  {line}")
+            print(f"Interpretation: {item.interpretation}")
+            print(f"Remaining uncertainty: {item.uncertainty}")
+            print(f"Next experiment: {item.next_experiment}")
+    if plan.memory_chain is not None:
+        item = plan.memory_chain
+        print("\nLearning memory")
+        print(f"Opportunity: {item.opportunity}")
+        print(f"Hypothesis: {item.hypothesis}")
+        print(f"Experiment: {item.experiment}")
+        print(f"Result: {item.result}")
+        print(f"Learning: {item.learning}")
+        print(f"Decision: {item.decision}")
+        if plan.prior_learning is not None and plan.informed_experiment:
+            print(f"Past experiment: {plan.prior_learning.experiment}")
+            print(f"Past learning: {plan.prior_learning.learning}")
+            print(f"New experiment: {plan.informed_experiment}")
+    print(f"\n{plan.decision}")
+    print(plan.pm_summary)
+
+
+def _print_memory(agent: DiscoveryAgent) -> None:
+    from discovery.models import MemoryKind
+    from discovery.present import MEMORY_LABELS
+
+    memory = agent.memory()
+    if not memory.records:
+        print("No product memory yet. Run `discovery demo` or `discovery run`.")
+        return
+    for kind in MemoryKind:
+        records = memory.of_kind(kind)
+        print(f"\n{MEMORY_LABELS[kind.value]} ({len(records)})")
+        if not records:
+            print("  None recorded.")
+            continue
+        for record in records:
+            print(f"  {record.title}")
+    print()
+    for question in QUESTIONS:
+        answer = agent.ask(question)
+        print(question)
+        print(answer.answer)
+        print()
+
+
+def _print_loop(agent: DiscoveryAgent, opportunity_id: str | None) -> None:
+    opportunities = agent.opportunities()
+    if opportunity_id:
+        opportunities = [item for item in opportunities if item.id == opportunity_id]
+        if not opportunities:
+            raise ValueError(f"No opportunity named {opportunity_id}")
+    elif opportunities:
+        approved = next((item for item in opportunities if item.status.value == "approved"), None)
+        pursue = next((item for item in opportunities if item.verdict.value == "pursue"), None)
+        chosen = approved or pursue or opportunities[0]
+        opportunities = [chosen]
+    if not opportunities:
+        print("No product loop yet. Run `discovery demo` or `discovery run`.")
+        return
+    for opportunity in opportunities:
+        loop = agent.development_loop(opportunity.id)
+        if loop is None:
+            continue
+        print(loop.title)
+        for stage in loop.stages:
+            print(f"\n{stage.title}  {stage.status.value}")
+            print(stage.summary)
+            for line in stage.lines:
+                print(f"  {line}")
+            if stage.stage.value != "discovery_return":
+                print("↓")
+
+
 def _print_graph(agent: DiscoveryAgent, opportunity_id: str | None) -> None:
     stored = agent.opportunity_graph()
     if stored is None:
@@ -301,6 +509,14 @@ def _print_trace(graph, chosen) -> None:
         ("product", chosen.product),
         ("mvp", chosen.mvp),
         ("business_case", chosen.business_case),
+        ("hypothesis", chosen.hypothesis),
+        ("experiment", chosen.experiment),
+        ("observation", chosen.observation),
+        ("learning", chosen.learning),
+        ("decision", chosen.decision),
+        ("product_change", chosen.product_change),
+        ("new_observation", chosen.new_observation),
+        ("new_hypothesis", chosen.new_hypothesis),
     )
     for kind, node in slots:
         if node is None:

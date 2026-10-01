@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Opportunity intelligence · {{ context.name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Opportunity intelligence engine</p>
+    <h1>Six capabilities, one path</h1>
+    <p class="mission">Signals are ingested, problems cluster, an opportunity is detected, the evidence graph explains it, validation challenges it, and an approved brief becomes the PRD.</p>
+  </div>
+  <div class="hero-actions">
+    <form method="post" action="/cycle">
+      <button type="submit" class="button button-primary" {% if signal_count == 0 %}disabled{% endif %}>Run cycle</button>
+    </form>
+  </div>
+</section>
+
+{% if report %}
+<nav class="filters" aria-label="Opportunities">
+  {% for opp in opportunities %}
+  <a href="/engine?opportunity={{ opp.id }}" {% if opp.id == selected %}aria-current="page"{% endif %}>{{ opp.title }}</a>
+  {% endfor %}
+</nav>
+
+<section class="card">
+  <h2>{{ report.title }}</h2>
+  <p class="mapping"><a href="/opportunities/{{ report.opportunity_id }}">Open the product opportunity brief</a></p>
+</section>
+
+<ol class="loop-list">
+  {% for stage in report.stages %}
+  <li class="loop-stage loop-ready">
+    <p class="loop-title">{{ loop.index }}. {{ stage.capability }}</p>
+    <p>{{ stage.summary }}</p>
+    {% if stage.lines %}
+    <ul class="plain">
+      {% for line in stage.lines %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if stage.href %}<p class="mapping"><a href="{{ stage.href }}">Open this capability</a></p>{% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<section class="empty">
+  <h2>No engine run yet</h2>
+  <p>Load the sample workspace. The engine then walks one opportunity from the signals to the PRD.</p>
+  <form method="post" action="/demo">
+    <button type="submit" class="button button-primary">Load sample</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

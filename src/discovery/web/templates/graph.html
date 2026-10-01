@@ -5,7 +5,7 @@
   <div>
     <p class="eyebrow">Opportunity graph</p>
     <h1>Why does this opportunity exist?</h1>
-    <p class="mission">The bet sits on a path from the market through the trend, the users, the competitors, the problem, and the gap. Each step cites the evidence it came from.</p>
+    <p class="mission">The bet sits on a path from the market through the trend, the users, the competitors, the problem, and the gap. After the opportunity, the same path keeps the hypothesis, the experiment, the observation, and the learning. A new observation starts the next hypothesis.</p>
   </div>
   <div class="hero-actions">
     <form method="post" action="/cycle">
@@ -52,6 +52,25 @@
     {% with node = trace.mvp %}{% include "graph_node.html" %}{% endwith %}
     {% with node = trace.business_case %}{% include "graph_node.html" %}{% endwith %}
   </div>
+  {% if trace.hypothesis %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.hypothesis %}{% include "graph_node.html" %}{% endwith %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.experiment %}{% include "graph_node.html" %}{% endwith %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.observation %}{% include "graph_node.html" %}{% endwith %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.learning %}{% include "graph_node.html" %}{% endwith %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.decision %}{% include "graph_node.html" %}{% endwith %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.product_change %}{% include "graph_node.html" %}{% endwith %}
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.new_observation %}{% include "graph_node.html" %}{% endwith %}
+  <p class="graph-return">A new observation starts the next hypothesis.</p>
+  <div class="graph-arrow" aria-hidden="true">↓</div>
+  {% with node = trace.new_hypothesis %}{% include "graph_node.html" %}{% endwith %}
+  {% endif %}
 </div>
 
 <section class="section-head">

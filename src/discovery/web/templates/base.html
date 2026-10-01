@@ -14,12 +14,16 @@
     <div class="site-header-inner">
       <a class="wordmark" href="/">AI Product Discovery</a>
       <nav class="nav">
+        <a href="/engine" {% if engine|default(false) %}aria-current="page"{% endif %}>Engine</a>
+        <a href="/experiment" {% if experiment|default(false) %}aria-current="page"{% endif %}>Experiment</a>
         <a href="/market" {% if market|default(false) %}aria-current="page"{% endif %}>Market</a>
         <a href="/users" {% if users|default(false) %}aria-current="page"{% endif %}>Users</a>
         <a href="/competitors" {% if competitors|default(false) %}aria-current="page"{% endif %}>Competitors</a>
         <a href="/detect" {% if detect|default(false) %}aria-current="page"{% endif %}>Detection</a>
         <a href="/validate" {% if validate|default(false) %}aria-current="page"{% endif %}>Validate</a>
         <a href="/graph" {% if graph|default(false) %}aria-current="page"{% endif %}>Graph</a>
+        <a href="/loop" {% if loop|default(false) %}aria-current="page"{% endif %}>Loop</a>
+        <a href="/memory" {% if memory|default(false) %}aria-current="page"{% endif %}>Memory</a>
         <a href="/" {% if not queue|default(false) and not market|default(false) and not users|default(false) and not competitors|default(false) and not detect|default(false) and not validate|default(false) and not graph|default(false) and request.url.path == '/' %}aria-current="page"{% endif %}>Review board</a>
         <a href="/queue" {% if queue|default(false) %}aria-current="page"{% endif %}>PM queue</a>
       </nav>

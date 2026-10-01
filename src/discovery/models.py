@@ -417,6 +417,318 @@ class ProductOpportunityBrief(BaseModel):
     experiment: str
 
 
+class LoopStage(str, Enum):
+    discovery = "discovery"
+    graph = "graph"
+    product_manager = "product_manager"
+    prd = "prd"
+    architect = "architect"
+    developer = "developer"
+    qa = "qa"
+    review = "review"
+    production = "production"
+    analytics = "analytics"
+    discovery_return = "discovery_return"
+
+
+class LoopStatus(str, Enum):
+    ready = "ready"
+    waiting = "waiting"
+    hold = "hold"
+    returned = "returned"
+
+
+class LoopArtifact(BaseModel):
+    """One hop in the closed product loop."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    stage: LoopStage
+    title: str
+    status: LoopStatus
+    summary: str
+    lines: list[str] = Field(default_factory=list)
+
+
+class ReturnSignal(BaseModel):
+    """A measurement the experiment sends back into discovery."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    body: str
+
+
+class DevelopmentLoop(BaseModel):
+    """Discovery, the product manager, the build agents, and the return path."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    opportunity_id: str
+    title: str
+    stages: list[LoopArtifact]
+    pm_brief: str = ""
+    return_signals: list[ReturnSignal] = Field(default_factory=list)
+
+
+class MemoryKind(str, Enum):
+    products = "products"
+    features = "features"
+    users = "users"
+    problems = "problems"
+    competitors = "competitors"
+    experiments = "experiments"
+    decisions = "decisions"
+    metrics = "metrics"
+    feedback = "feedback"
+    rejected_ideas = "rejected_ideas"
+    successful_ideas = "successful_ideas"
+    failed_experiments = "failed_experiments"
+
+
+class MemoryRecord(BaseModel):
+    """One thing the product memory can cite later."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    kind: MemoryKind
+    title: str
+    detail: str = ""
+    observed_at: date | None = None
+    source: str = ""
+    subject: str = ""
+    count: int = Field(default=1, ge=1)
+    verdict: str = ""
+
+
+class ProductMemory(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    records: list[MemoryRecord] = Field(default_factory=list)
+
+    def of_kind(self, kind: MemoryKind) -> list[MemoryRecord]:
+        return [record for record in self.records if record.kind is kind]
+
+
+class MemoryAnswer(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    question: str
+    answer: str
+    records: list[MemoryRecord] = Field(default_factory=list)
+
+
+class IntelligenceStage(BaseModel):
+    """One capability of the opportunity intelligence engine."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capability: str
+    summary: str
+    lines: list[str] = Field(default_factory=list)
+    href: str = ""
+
+
+class OpportunityIntelligence(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    opportunity_id: str
+    title: str
+    stages: list[IntelligenceStage]
+
+
+class ExperimentStage(BaseModel):
+    """One step from a hypothesis to a learning."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    summary: str
+    lines: list[str] = Field(default_factory=list)
+    status: str = "ready"
+
+
+class TestHypothesis(BaseModel):
+    """One claim the experiment can falsify before a build."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: str
+    statement: str
+    target_segment: str
+    expected_behavior: str
+    metric: str
+    threshold: str
+    time_period: str
+    confidence: str
+    evidence: str
+
+
+class ExperimentSpec(BaseModel):
+    """One experiment, specified before it runs."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    objective: str
+    hypothesis: str
+    target_audience: str
+    variant: str
+    control: str
+    primary_metric: str
+    secondary_metric: str
+    guardrails: list[str]
+    sample_size: str
+    duration: str
+    decision_threshold: str
+    risks: list[str]
+    expected_learning: str
+    outcomes: list[str]
+
+
+class ExperimentChoice(BaseModel):
+    """A candidate experiment, with what it costs and what it can teach."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: str
+    name: str
+    cost: str
+    information: str
+    selected: bool = False
+
+
+class MetricReading(BaseModel):
+    """A change from the control, which is the behavioral baseline."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    lane: str
+    change: float
+
+
+class MonitorLane(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    lines: list[str] = Field(default_factory=list)
+
+
+class ExperimentMonitor(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: str
+    explanation: str
+    lanes: list[MonitorLane] = Field(default_factory=list)
+    outcome: str = ""
+
+
+class ExecutionStep(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    action: str
+    system: str
+    summary: str
+    status: str
+    needs_approval: bool = False
+
+
+class ResultsAnalysis(BaseModel):
+    """What the experiment taught, including the evidence that cuts against it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    hypothesis: str
+    observed: str
+    supporting: list[str] = Field(default_factory=list)
+    contradicting: list[str] = Field(default_factory=list)
+    interpretation: str
+    uncertainty: str
+    next_experiment: str
+
+
+class ExperimentExecution(BaseModel):
+    """The nine execution steps, gated before production changes."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    steps: list[ExecutionStep]
+    approved: bool = False
+    approval_note: str = ""
+    monitor: ExperimentMonitor
+    report: str
+    analysis: ResultsAnalysis | None = None
+
+
+class ExperimentLearning(BaseModel):
+    """One finished or in-progress experiment the next design can cite."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    opportunity_id: str
+    opportunity: str
+    hypothesis: str
+    experiment: str
+    result: str
+    learning: str
+    decision: str
+
+
+class PortfolioRow(BaseModel):
+    """One experiment in the portfolio."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    status: str
+    risk: str
+    opportunity_id: str = ""
+    audience: str = ""
+    surface: str = ""
+    information: str = ""
+
+
+class PortfolioNote(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    topic: str
+    summary: str
+
+
+class ExperimentPortfolio(BaseModel):
+    """Every experiment the agent is tracking, and what that set implies."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    rows: list[PortfolioRow] = Field(default_factory=list)
+    notes: list[PortfolioNote] = Field(default_factory=list)
+
+
+class ExperimentPlan(BaseModel):
+    """The cheapest experiment for one opportunity, and what it decided."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    opportunity_id: str
+    title: str
+    stages: list[ExperimentStage]
+    decision: str
+    decision_summary: str
+    pm_summary: str
+    hypotheses: list[TestHypothesis] = Field(default_factory=list)
+    unknown: str = ""
+    choices: list[ExperimentChoice] = Field(default_factory=list)
+    selected: str = ""
+    catalog: list[str] = Field(default_factory=list)
+    specifications: list[ExperimentSpec] = Field(default_factory=list)
+    execution: ExperimentExecution | None = None
+    memory_chain: ExperimentLearning | None = None
+    prior_learning: ExperimentLearning | None = None
+    informed_experiment: str = ""
+
+
 class Check(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -497,6 +809,14 @@ class NodeKind(str, Enum):
     product = "product"
     mvp = "mvp"
     business_case = "business_case"
+    hypothesis = "hypothesis"
+    experiment = "experiment"
+    observation = "observation"
+    learning = "learning"
+    decision = "decision"
+    product_change = "product_change"
+    new_observation = "new_observation"
+    new_hypothesis = "new_hypothesis"
 
 
 class GraphSource(BaseModel):
@@ -560,6 +880,15 @@ class OpportunityTrace(BaseModel):
     product: GraphNode | None = None
     mvp: GraphNode | None = None
     business_case: GraphNode | None = None
+    hypothesis: GraphNode | None = None
+    experiment: GraphNode | None = None
+    observation: GraphNode | None = None
+    learning: GraphNode | None = None
+    decision: GraphNode | None = None
+    product_change: GraphNode | None = None
+    new_observation: GraphNode | None = None
+    new_hypothesis: GraphNode | None = None
+    learning_path: list[str] = Field(default_factory=list)
     paths: list[list[str]] = Field(default_factory=list)
     sources: list[GraphSource] = Field(default_factory=list)
 

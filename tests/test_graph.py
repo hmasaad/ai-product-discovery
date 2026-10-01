@@ -37,6 +37,15 @@ def test_instrumentation_traces_back_to_its_sources():
     assert chosen.mvp is not None and "Pilot guided tracking plans" in chosen.mvp.detail
     assert chosen.product is not None and chosen.product.title == "Northstar"
     assert chosen.business_case is not None and chosen.business_case.title == "Pursue"
+    assert chosen.hypothesis is not None
+    assert chosen.hypothesis.title == "Users want guided tracking plans."
+    assert chosen.experiment is not None and chosen.experiment.title == "Guided tracking plans fake door"
+    assert chosen.observation is not None and chosen.observation.title == "No observation is recorded."
+    assert chosen.learning is not None and chosen.learning.title == "No learning is recorded yet."
+    assert chosen.new_hypothesis is not None
+    assert chosen.new_hypothesis.title == "The next hypothesis waits for that observation."
+    assert chosen.learning_path[-1].startswith("new_hypothesis-")
+    assert "Test actionable recommendations" not in chosen.new_hypothesis.title
     titles = {source.title for source in chosen.sources}
     assert "Instrumentation took three weeks" in titles
     assert any("stall" in title.lower() or "instrumentation" in title.lower() for title in titles)
