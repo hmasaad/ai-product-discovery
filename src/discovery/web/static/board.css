@@ -327,6 +327,10 @@ main {
 .memory-chain li { padding: 8px 0 8px 14px; border-left: 2px solid var(--line); }
 .memory-chain span { display: block; color: var(--muted); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
 .memory-chain strong { display: block; margin-top: 2px; font-weight: 560; }
+.value-chain { list-style: none; padding: 0; margin: 12px 0; }
+.value-chain li { padding: 6px 0 6px 14px; border-left: 2px solid var(--line); }
+.value-chain li:not(:last-child)::after { content: "↓"; display: block; color: var(--accent); margin: 4px 0 0; }
+.value-chain li.prioritize { color: var(--pursue); font-weight: 600; }
 .graph-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(100%, 52rem); }
 .graph-node {
   width: min(100%, 34rem);

@@ -45,6 +45,48 @@
 </section>
 {% endif %}
 
+{% if portfolio.values %}
+<section class="card">
+  <p class="eyebrow">Experiment value engine</p>
+  <h2>What to run next</h2>
+  <p>{{ portfolio.formula }}</p>
+  <ol class="value-chain">
+    {% for step in portfolio.chain %}
+    <li{% if step == "PRIORITIZE" %} class="prioritize"{% endif %}>{{ step }}</li>
+    {% endfor %}
+  </ol>
+  {% if portfolio.values[0].prioritize %}
+  <p>Prioritize {{ portfolio.values[0].name }}.</p>
+  {% endif %}
+  <div class="table-wrap">
+    <table class="summary portfolio">
+      <thead>
+        <tr>
+          <th>Experiment</th>
+          <th>Uncertainty</th>
+          <th>Information gain</th>
+          <th>Decision impact</th>
+          <th>Cost</th>
+          <th>Priority</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in portfolio.values %}
+        <tr{% if item.prioritize %} class="choice-selected"{% endif %}>
+          <td>{% if item.opportunity_id %}<a href="/experiment?opportunity={{ item.opportunity_id }}">{{ item.name }}</a>{% else %}{{ item.name }}{% endif %}</td>
+          <td>{{ item.uncertainty }}</td>
+          <td>{{ item.information_gain }}</td>
+          <td>{{ item.decision_impact }}</td>
+          <td>{{ item.cost }}</td>
+          <td>{{ item.priority }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
 {% if plan %}
 <nav class="filters" aria-label="Opportunities">
   {% for opp in opportunities %}

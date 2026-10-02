@@ -368,6 +368,8 @@ Each experiment is also stored as a chain: opportunity, hypothesis, experiment, 
 
 The same agent keeps an experiment portfolio. Each row is an experiment with a status and a risk. Status is planned until a start is approved, running once it is, and complete once a result is stored. Risk follows the cost of the selected experiment. From the set, the agent calls out experiment conflicts, user overlap, resource consumption, statistical contamination, priority, and expected information gain.
 
+The value engine ranks that set by expected information gain times decision impact, divided by experiment cost. High uncertainty produces high information gain. A high-impact decision that a low-cost experiment can settle is the one to prioritize. A finished experiment and an expensive build rank lower.
+
 Open the Experiment tab, or run `discovery experiment opp-instrumentation`.
 
 ## Opportunity graph

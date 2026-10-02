@@ -331,6 +331,19 @@ def _print_experiment(agent: DiscoveryAgent, opportunity_id: str | None) -> None
         for note in portfolio.notes:
             print(f"\n{note.topic}")
             print(note.summary)
+        if portfolio.values:
+            print(f"\nExperiment value engine")
+            print(portfolio.formula)
+            for step in portfolio.chain:
+                print(f"  {step}")
+            for item in portfolio.values:
+                mark = " prioritize" if item.prioritize else ""
+                print(
+                    f"  {item.name}: uncertainty {item.uncertainty}, "
+                    f"information gain {item.information_gain}, "
+                    f"decision impact {item.decision_impact}, "
+                    f"cost {item.cost}, priority {item.priority}{mark}"
+                )
         print()
     plan = agent.experiment(opportunities[0].id)
     if plan is None:

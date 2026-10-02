@@ -170,6 +170,9 @@ def test_board_review_and_queue(tmp_path: Path, monkeypatch):
     assert "Statistical contamination" in experiment.text
     assert "Expected information gain" in experiment.text
     assert "No experiment is running." in experiment.text
+    assert "Expected information gain × Decision impact ÷ Experiment cost" in experiment.text
+    assert "PRIORITIZE" in experiment.text
+    assert "Prioritize Guided tracking plans." in experiment.text
     assert "AI Spending Insight" not in experiment.text
     assert "Users want guided tracking plans." in experiment.text
     assert "Target segment" in experiment.text

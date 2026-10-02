@@ -688,6 +688,7 @@ class PortfolioRow(BaseModel):
     audience: str = ""
     surface: str = ""
     information: str = ""
+    cost: str = ""
 
 
 class PortfolioNote(BaseModel):
@@ -697,6 +698,21 @@ class PortfolioNote(BaseModel):
     summary: str
 
 
+class ExperimentValue(BaseModel):
+    """One experiment scored by what it can teach, not by business value alone."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    opportunity_id: str = ""
+    uncertainty: str
+    information_gain: str
+    decision_impact: str
+    cost: str
+    priority: str
+    prioritize: bool = False
+
+
 class ExperimentPortfolio(BaseModel):
     """Every experiment the agent is tracking, and what that set implies."""
 
@@ -704,6 +720,9 @@ class ExperimentPortfolio(BaseModel):
 
     rows: list[PortfolioRow] = Field(default_factory=list)
     notes: list[PortfolioNote] = Field(default_factory=list)
+    formula: str = ""
+    chain: list[str] = Field(default_factory=list)
+    values: list[ExperimentValue] = Field(default_factory=list)
 
 
 class ExperimentPlan(BaseModel):

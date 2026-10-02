@@ -46,7 +46,10 @@ def build_portfolio(
         _row(opportunity, stored, remembered, opportunity.id in approved)
         for opportunity in opportunities
     ]
-    return assess(rows)
+    portfolio = assess(rows)
+    from discovery.agents.value import attach_value
+
+    return attach_value(portfolio, opportunities)
 
 
 def assess(rows: list[PortfolioRow]) -> ExperimentPortfolio:
@@ -89,6 +92,7 @@ def _row(
         audience=audience,
         surface=opportunity.theme,
         information=information,
+        cost=risk,
     )
 
 
